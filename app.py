@@ -1,139 +1,111 @@
 import streamlit as st
-import yfinance as yf
+import requests
 import pandas as pd
 import plotly.graph_objects as go
-from datetime import timedelta
 
-# ======================
-# APP CONFIG
-# ======================
-st.set_page_config(
-    page_title="TradePal",
-    layout="wide"
-)
+# =========================
+# KONFIG
+# =========================
+st.set_page_config(page_title="TradePal", layout="wide")
 
+API_KEY = "0DHMYBG3KZ5DZEOJ"  # <-- din API-nyckel är inlagd här
+
+# =========================
+# UI
+# =========================
 st.title("📊 TradePal – Smart signalanalys för svenska aktier")
 
-# ======================
-# SIDEBAR – INPUT
-# ======================
-with st.sidebar:
-    st.header("🔍 Sök aktie")
-
-    ticker = st.text_input(
-        "Ticker (ex: KINV-B.ST, VOLV-B.ST)",
-        value="KINV-B.ST"
-    )
-
-    timeframe = st.selectbox(
-        "Tidsperiod",
-        ["1D", "3D", "1W", "1M", "3M", "6M", "1Y", "MAX"],
-        index=5
-    )
-
-    chart_type = st.radio(
-        "Graftyp",
-        ["Linjegraf", "Candlestick"],
-        horizontal=True
-    )
-
-# ======================
-# INFOBOX – SIGNALMODELL
-# ======================
-st.markdown("""
-### 🧠 Signalmodell (under utveckling)
-
-TradePal använder en **poängbaserad modell (0–100)**.
-
-**KÖP (bottenlogik)**  
-- RSI < 30 → 25p  
-- Volymspik → 20p  
-- Stöd-nivå → 30p  
-- Mean reversion → 25p  
-
-**SÄLJ (topplogik)**  
-- RSI > 70 → 25p  
-- Volymspik → 20p  
-- Motstånd → 30p  
-- Trendutmattning → 25p  
-
-🟡 Observera: 60–74  
-🟢 Stark signal: 75–100  
-
-> *Inga signaler visas ännu – redo för backtesting.*
-""")
-
-st.divider()
-
-# ======================
-# DATAHÄMTNING
-# ======================
-@st.cache_data
-def load_data(ticker):
-    df = yf.downloadst.write("Rådata:")
-st.write(df.head())
-st.write("Antal rader:", len(df))
-(ticker, period="max")
-    df.dropna(inplace=True)
-    df = df.sort_index()
-    return df
-
-try:
-    df = load_data(ticker)
-except:
-    st.error("❌ Kunde inte hämta data för vald ticker.")
-    st.stop()
-
-if df.empty:
-    st.error("❌ Ingen data hittades.")
-    st.stop()
-
-# ======================
-# TIDSRAM-FILTER
-# ======================
-TIMEFRAME_MAP = {
-    "1D": 1,
-    "3D": 3,
-    "1W": 7,
-    "1M": 30,
-    "3M": 90,
-    "6M": 180,
-    "1Y": 365
-}
-
-if timeframe != "MAX":
-    end_date = df.index.max()
-    start_date = end_date - timedelta(days=TIMEFRAME_MAP[timeframe])
-    df = df[df.index >= start_date]
-
-# ======================
-# GRAF (INGA SIGNALER ÄN)
-# ======================
-fig = go.Figure()
-
-if chart_type == "Candlestick":
-    fig.add_trace(go.Candlestick(
-        x=df.index,
-        open=df["Open"],
-        high=df["High"],
-        low=df["Low"],
-        close=df["Close"],
-        name="Pris"
-    ))
-else:
-    fig.add_trace(go.Scatter(
-        x=df.index,
-        y=df["Close"],
-        mode="lines",
-        name="Pris"
-    ))
-
-fig.update_layout(
-    height=650,
-    margin=dict(l=40, r=40, t=40, b=40),
-    xaxis_rangeslider_visible=False
+ticker_input = st.text_input("Sök svensk aktie (ex: VOLV-B, KINV-B)", "VOLV-B")
+timeframe = st.selectbox(
+    "Tidsperiod",
+    ["6 månader", "1 år", "3 år", "Max"]
 )
 
-st.plotly_chart(fig, use_container_width=True)
+# =========================
+# HJÄLPFUNKTIONER
+# =========================
+def fetch_alpha_vantage(symbol):
+    url = (
+        "https://www.alphavantage.co/query?"
+        f"function=TIME_SERIES_DAILY_ADJUSTED"
+        f"&symbol={symbol}"
+        f"&market=STO"
+        f"&apikey={API_KEY}"
+        f"&outputsize=full"
+    )
 
-st.caption("🔧 Inga köp/sälj-signaler visas ännu – signal engine kopplas på i nästa steg.")
+    r = requests.get(url)
+    data = r.json()
+
+    if "Time Series (Daily)" not in data:
+        return pd.DataFrame()
+
+    df = pd.DataFrame.from_dict(
+        data["Time Series (Daily)"],
+        orient="index"
+    )
+
+    df.index = pd.to_datetime(df.index)
+    df = df.sort_index()
+
+    df = df.rename(columns={
+        "1. open": "Open",
+        "2. high": "High",
+        "3. low": "Low",
+        "4. close": "Close",
+        "6. volume": "Volume"
+    })
+
+    df = df[["Open", "High", "Low", "Close", "Volume"]].astype(float)
+    return df
+
+
+def filter_timeframe(df, tf):
+    if tf == "6 månader":
+        return df.last("180D")
+    if tf == "1 år":
+        return df.last("365D")
+    if tf == "3 år":
+        return df.last("1095D")
+    return df
+
+
+# =========================
+# HUVUDLOGIK
+# =========================
+if ticker_input:
+    with st.spinner("Hämtar data..."):
+        df = fetch_alpha_vantage(ticker_input.upper())
+
+    if df.empty:
+        st.error(f"Ingen data hittades för {ticker_input}")
+        st.stop()
+
+    df = filter_timeframe(df, timeframe)
+
+    # =========================
+    # GRAF
+    # =========================
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Candlestick(
+            x=df.index,
+            open=df["Open"],
+            high=df["High"],
+            low=df["Low"],
+            close=df["Close"],
+            name="Pris"
+        )
+    )
+
+    fig.update_layout(
+        height=600,
+        template="plotly_dark",
+        title=f"{ticker_input} – Pris",
+        xaxis_rangeslider_visible=False
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.success(f"Visar {len(df)} datapunkter för {ticker_input}")
