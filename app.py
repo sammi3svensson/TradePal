@@ -70,7 +70,10 @@ st.divider()
 # ======================
 @st.cache_data
 def load_data(ticker):
-    df = yf.download(ticker, period="max")
+    df = yf.downloadst.write("Rådata:")
+st.write(df.head())
+st.write("Antal rader:", len(df))
+(ticker, period="max")
     df.dropna(inplace=True)
     df = df.sort_index()
     return df
