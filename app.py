@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 # =========================
 st.set_page_config(page_title="TradePal", layout="wide")
 
-API_KEY = "0DHMYBG3KZ5DZEOJ"  # <-- din API-nyckel är inlagd här
+API_KEY = "0DHMYBG3KZ5DZEOJ"  # Din Alpha Vantage-nyckel
 
 # =========================
 # UI
@@ -25,17 +25,23 @@ timeframe = st.selectbox(
 # HJÄLPFUNKTIONER
 # =========================
 def fetch_alpha_vantage(symbol):
+    symbol = symbol.upper()
+    if not symbol.endswith(".ST"):
+        symbol += ".ST"  # automatiskt för svenska tickers
+
     url = (
         "https://www.alphavantage.co/query?"
         f"function=TIME_SERIES_DAILY_ADJUSTED"
         f"&symbol={symbol}"
-        f"&market=STO"
         f"&apikey={API_KEY}"
         f"&outputsize=full"
     )
 
     r = requests.get(url)
     data = r.json()
+    
+    # DEBUG: visa API-respons
+    st.write("DEBUG: API-respons", data)
 
     if "Time Series (Daily)" not in data:
         return pd.DataFrame()
@@ -75,10 +81,10 @@ def filter_timeframe(df, tf):
 # =========================
 if ticker_input:
     with st.spinner("Hämtar data..."):
-        df = fetch_alpha_vantage(ticker_input.upper())
+        df = fetch_alpha_vantage(ticker_input)
 
     if df.empty:
-        st.error(f"Ingen data hittades för {ticker_input}")
+        st.error(f"Ingen data hittades för {ticker_input}. Kontrollera att tickern är korrekt och att du inte överskridit API-gränsen.")
         st.stop()
 
     df = filter_timeframe(df, timeframe)
