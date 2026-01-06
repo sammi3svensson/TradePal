@@ -36,12 +36,17 @@ ticker_input = st.text_input("Sök ticker", "")
 if "selected_ticker" not in st.session_state:
     st.session_state.selected_ticker = ""
 
-# --- Lista med bolag som knappar i expander ---
-with st.expander("Stockholmsbörsen"):
+# --- Lista med bolag som knappar i expander (scrollbar) ---
+with st.expander("Stockholmsbörsen", expanded=False):
+    st.markdown(
+        """
+        <div style="max-height: 300px; overflow-y: auto; width: fit-content;">
+    """, unsafe_allow_html=True)
     for name, symbol in nasdaq_stocks.items():
         if st.button(f"{name} – {symbol.replace('.ST','')}"):
             st.session_state.selected_ticker = symbol
-            ticker_input = symbol.replace(".ST", "")  # fyll inputfältet visuellt också
+            ticker_input = symbol.replace(".ST", "")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # Bestäm vilken ticker som ska användas
 ticker = st.session_state.selected_ticker if st.session_state.selected_ticker else ticker_input.upper()
