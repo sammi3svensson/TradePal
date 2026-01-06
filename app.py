@@ -66,16 +66,14 @@ period = period_map[timeframe]
 # --- Hämta och visa data ---
 try:
     data = yf.Ticker(ticker).history(period=period, interval=interval)
+
     if data.empty:
         st.error(f"Inget data hittades för {ticker} i vald tidsram.")
     else:
         data.reset_index(inplace=True)
-        data['Date'] = pd.to_datetime(data['Datetime'] if 'Datetime' in data.columns else data['Date'])
-
-        hover_text = [
-            f"{row['Date']}<br>Open: {row['Open']}<br>High: {row['High']}<br>Low: {row['Low']}<br>Close: {row['Close']}"
-            for _, row in data.iterrows()
-        ]
+        data['Date'] = pd.to_datetime(
+            data['Datetime'] if 'Datetime' in data.columns else data['Date']
+        )
 
         if chart_type == "Candlestick":
             fig = go.Figure(data=[go.Candlestick(
@@ -83,40 +81,32 @@ try:
                 open=data['Open'],
                 high=data['High'],
                 low=data['Low'],
-                close=data['Close'],
-                hovertext=hover_text,
-                hoverinfo="text"
+                close=data['Close']
             )])
         else:
             fig = go.Figure(data=[go.Scatter(
                 x=data['Date'],
                 y=data['Close'],
-                mode='lines',
-                hovertext=hover_text,
-                hoverinfo="text"
+                mode='lines'
             )])
 
-        # ✅ Y-AXEL FIX – MÅSTE LIGGA HÄR
+        # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
         price_min = data['Low'].min()
-price_max = data['High'].max()
+        price_max = data['High'].max()
 
-pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
-pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
-
-
+        pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
+        pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
 
         fig.update_layout(
-    title=f"{ticker} – {timeframe} trend",
-    xaxis_title="Datum",
-    yaxis_title="Pris",
-    yaxis=dict(
-    range=[price_min - pad_down, price_max + pad_up],
-    autorange=False,
-    rangemode="normal"
-)
-
-)
-
+            title=f"{ticker} – {timeframe} trend",
+            xaxis_title="Datum",
+            yaxis_title="Pris",
+            yaxis=dict(
+                range=[price_min - pad_down, price_max + pad_up],
+                autorange=False,
+                rangemode="normal"
+            )
+        )
 
         st.plotly_chart(fig, use_container_width=True)
 
