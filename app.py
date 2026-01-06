@@ -5,7 +5,7 @@ import plotly.graph_objs as go
 from datetime import datetime, timedelta
 
 # --- Din Finnhub API-nyckel ---
-API_KEY = "d5e8729r01qjckl2g1bgd5e8729r01qjckl2c0"
+API_KEY = "d5e8n9hr01qjckl2ipt0d5e8n9hr01qjckl2iptg"
 
 st.set_page_config(page_title="TradePal", layout="wide")
 
