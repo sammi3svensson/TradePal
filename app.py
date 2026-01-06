@@ -10,9 +10,11 @@ nasdaq_stocks = ["VOLV-B.ST", "ERIC-B.ST", "SAND.ST", "HM-B.ST", "ATCO-A.ST"]
 
 # Sökfält med autocomplete
 ticker_input = st.text_input("Sök ticker", "")
+# Visa förslag direkt under input om minst 2 bokstäver skrivits
 suggestions = [t for t in nasdaq_stocks if t.lower().startswith(ticker_input.lower())] if len(ticker_input) >= 2 else []
 
-ticker = st.selectbox("Välj ticker", suggestions) if suggestions else ticker_input.upper() if ticker_input else None
+# Om förslag finns, använd första förslaget automatiskt, annars texten användaren skrivit
+ticker = suggestions[0] if suggestions else ticker_input.upper() if ticker_input else None
 
 chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"])
 timeframe = st.selectbox("Välj tidsperiod", ["1d", "3d", "1w", "1m", "3m", "6m", "1y", "Max"])
