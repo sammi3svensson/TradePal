@@ -70,70 +70,53 @@ try:
     if data.empty:
         st.error(f"Inget data hittades för {ticker} i vald tidsram.")
     else:
-        data.reset_index(inplace=True)
+        # --- HÄR BÖRJAR DIN FIGURKOD ---
 
-        if 'Datetime' in data.columns:
-            data['Date'] = pd.to_datetime(data['Datetime'])
+        # Skapa figuren (candlestick eller linje)
+        if chart_type == "Candlestick":
+            fig = go.Figure(data=[go.Candlestick(
+                x=data['Date'],
+                open=data['Open'],
+                high=data['High'],
+                low=data['Low'],
+                close=data['Close'],
+                hovertext=hover_text,
+                hoverinfo="text"
+            )])
         else:
-            data['Date'] = pd.to_datetime(data['Date'])
+            fig = go.Figure(data=[go.Scatter(
+                x=data['Date'],
+                y=data['Close'],
+                mode="lines+markers",
+                hovertext=hover_text,
+                hoverinfo="text"
+            )])
 
-        hover_text = [
-            f"{row['Date']}<br>"
-            f"Open: {row['Open']}<br>"
-            f"High: {row['High']}<br>"
-            f"Low: {row['Low']}<br>"
-            f"Close: {row['Close']}"
-            for _, row in data.iterrows()
-        ]
+        # Rangebreaks endast för 1d
+        if timeframe == "1d":
+            fig.update_xaxes(
+                rangebreaks=[
+                    dict(bounds=["sat", "mon"]),
+                    dict(bounds=[17, 9], pattern="hour")
+                ]
+            )
 
+        # Y-axel padding
         price_min = data['Low'].min()
         price_max = data['High'].max()
         padding = max((price_max - price_min) * 0.15, price_max * 0.005)
 
-# Skapa figuren (candlestick eller linje)
-if chart_type == "Candlestick":
-    fig = go.Figure(data=[go.Candlestick(
-        x=data['Date'],
-        open=data['Open'],
-        high=data['High'],
-        low=data['Low'],
-        close=data['Close'],
-        hovertext=hover_text,
-        hoverinfo="text"
-    )])
-else:
-    fig = go.Figure(data=[go.Scatter(
-        x=data['Date'],
-        y=data['Close'],
-        mode="lines+markers",
-        hovertext=hover_text,
-        hoverinfo="text"
-    )])
+        fig.update_yaxes(range=[price_min - padding, price_max + padding])
 
-# Ta bort helger / natt (endast när det är rimligt)
-if timeframe == "1d":
-    fig.update_xaxes(
-        rangebreaks=[
-            dict(bounds=["sat", "mon"]),
-            dict(bounds=[17, 9], pattern="hour")
-        ]
-    )
+        # Layout
+        fig.update_layout(
+            title=f"{ticker} – {timeframe} trend",
+            xaxis_title="Datum",
+            yaxis_title="Pris"
+        )
 
-# Y-axel padding
-price_min = data['Low'].min()
-price_max = data['High'].max()
-padding = max((price_max - price_min) * 0.15, price_max * 0.005)
-
-fig.update_yaxes(range=[price_min - padding, price_max + padding])
-
-# Layout
-fig.update_layout(
-    title=f"{ticker} – {timeframe} trend",
-    xaxis_title="Datum",
-    yaxis_title="Pris"
-)
-
-st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
 
 except Exception as e:
     st.error(f"Fel vid hämtning av data: {e}")
+
