@@ -112,12 +112,17 @@ try:
                 hoverinfo="text"
             )])
 
-        fig.update_layout(
-            title=f"{ticker} – {timeframe} trend",
-            xaxis_title="Datum",
-            yaxis_title="Pris",
-            yaxis=dict(range=[y_min, y_max])
-        )
+        price_min = data['Low'].min()
+price_max = data['High'].max()
+padding = (price_max - price_min) * 0.05  # 5% luft
+
+fig.update_layout(
+    title=f"{ticker} – {timeframe} trend",
+    xaxis_title="Datum",
+    yaxis_title="Pris",
+    yaxis=dict(range=[price_min - padding, price_max + padding])
+)
+
 
         st.plotly_chart(fig, use_container_width=True)
 
