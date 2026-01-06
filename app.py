@@ -89,16 +89,11 @@ try:
                 mode='lines'
             )])
 
-        # --- NY FIX: Hoppa över helger och stretcha x-axeln för 1w, 1m, 3m ---
+        # --- NY FIX: Hoppa över helger OCH använd kategori för 1w, 1m, 3m ---
         if timeframe in ["1w", "1m", "3m"]:
-            # Hoppa över lör-sön
             fig.update_xaxes(
-                rangebreaks=[dict(bounds=["sat", "mon"])]
-            )
-            # Strecka x-axeln för bättre upplösning
-            fig.update_xaxes(
-                tickmode="auto",
-                nticks=20
+                rangebreaks=[dict(bounds=["sat", "mon"])],
+                type="category"  # Viktigt för bredare candlesticks
             )
 
         # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
