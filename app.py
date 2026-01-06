@@ -92,15 +92,22 @@ try:
                 mode='lines'
             )])
 
-        # --- FIX: 1w, 1m, 3m → jämn fördelning + snyggare tidvisning ---
+        # --- FIX: 1w, 1m, 3m → snygga ticklabels utan mikrosekunder ---
         if timeframe in ["1w", "1m", "3m"]:
+            if timeframe in ["1w", "1m"]:
+                # Visa dag-månad för 1w och 1m
+                tick_labels = pd.to_datetime(data['Date']).strftime('%d-%m')
+            else:  # 3m
+                # Visa bara timme:minut för 3m
+                tick_labels = pd.to_datetime(data['Date']).strftime('%H:%M')
+
             fig.update_xaxes(
                 type="category",
                 categoryorder="category ascending",
                 tickvals=data['Date'],
-                ticktext=[d.strftime("%H:%M") for d in data['Date']],  # Endast timme:minut
+                ticktext=tick_labels,
                 tickmode="auto",
-                nticks=10  # max 10 etiketter jämnt fördelade
+                nticks=10
             )
 
         # --- Öka höjden på trendfönstret ---
