@@ -6,28 +6,31 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="TradePal", layout="wide")
 st.title("TradePal – Smart signalanalys för svenska aktier")
 
-# --- BEHÅLL ALLA BOLAG SOM FÖRUT ---
+# --- Svenska Nasdaq aktier ---
 nasdaq_stocks = [
     "VOLV-B.ST", "ERIC-B.ST", "SAND.ST", "HM-B.ST", "ATCO-A.ST",
     "TELIA.ST", "SEB-A.ST", "SWED-A.ST", "SKF-B.ST", "H&M-B.ST",
     "ASSA-B.ST", "ALFA.ST", "TELGE.ST", "NCC-B.ST", "SSAB-A.ST",
     "KINV-B.ST", "EQT.ST", "HUSQ-B.ST", "ATCO-B.ST", "ESSITY-B.ST"
-    # Lägg till fler svenska aktier från Nasdaq Stockholm
 ]
 
-# --- Sökfält med autocomplete ---
-ticker_input = st.text_input("Sök ticker", "")
+# --- Google-style autocomplete ---
+if "ticker_input" not in st.session_state:
+    st.session_state.ticker_input = ""
 
-# Visa förslag direkt om minst 2 bokstäver
-suggestions = [t for t in nasdaq_stocks if t.lower().startswith(ticker_input.lower())] if len(ticker_input) >= 2 else []
+def set_ticker_input(t):
+    st.session_state.ticker_input = t
 
-# Klickbart förslag fyller i textfältet
-if suggestions:
-    selected = st.selectbox("Förslag", suggestions, index=0)
-    ticker_input = selected  # fyll i textfältet med valt förslag
+st.text_input("Sök ticker", key="ticker_input")
 
-# Lägg till .ST automatiskt
-ticker = ticker_input.upper()
+# Visa förslag om minst 2 bokstäver
+suggestions = [t for t in nasdaq_stocks if t.lower().startswith(st.session_state.ticker_input.lower())] if len(st.session_state.ticker_input) >= 2 else []
+
+for s in suggestions:
+    if st.button(s, key=s):
+        set_ticker_input(s)
+
+ticker = st.session_state.ticker_input.upper()
 if ticker and not ticker.endswith(".ST"):
     ticker += ".ST"
 
