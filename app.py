@@ -92,13 +92,15 @@ try:
                 mode='lines'
             )])
 
-        # --- FIX: 1w, 1m, 3m → jämn fördelning av candlesticksen utan glapp ---
+        # --- FIX: 1w, 1m, 3m → jämn fördelning + sparsamma datumetiketter ---
         if timeframe in ["1w", "1m", "3m"]:
             fig.update_xaxes(
-                type="category",                     # jämn fördelning
+                type="category",
                 categoryorder="category ascending",
-                tickvals=data['Date'],               # placera ticks på datumen
-                ticktext=[d.strftime("%Y-%m-%d") for d in data['Date']]  # visa datum
+                tickvals=data['Date'],  
+                ticktext=[d.strftime("%Y-%m-%d") for d in data['Date']],
+                tickmode="auto",
+                nticks=10  # max 10 datumetiketter jämnt fördelade
             )
 
         # --- Öka höjden på trendfönstret ---
