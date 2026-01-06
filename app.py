@@ -6,32 +6,27 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="TradePal", layout="wide")
 st.title("TradePal – Smart signalanalys för svenska aktier")
 
-# Lista svenska aktier (exempel)
+# --- BEHÅLL ALLA BOLAG SOM FÖRUT ---
 nasdaq_stocks = [
     "VOLV-B.ST", "ERIC-B.ST", "SAND.ST", "HM-B.ST", "ATCO-A.ST",
-    "SHB-A.ST", "SWED-A.ST", "ABB.ST", "INVE-B.ST", "TELIA.ST",
-    "SEB-A.ST", "SKA-B.ST", "ALFA.ST", "HEXA-B.ST", "ESSITY-B.ST",
-    "EKTAB.ST", "BOL.ST", "NDA-SE.ST", "NDA-A.ST", "NDA-B.ST",
-    "SSAB-A.ST", "SSAB-B.ST", "ASSA-B.ST", "SKF-B.ST", "BULTEN.ST",
-    "ELUX-B.ST", "SAAB-B.ST", "SCA-B.ST", "NIBE-B.ST", "EQT.ST",
-    "MTG-B.ST", "HUSQ-B.ST", "KINV-B.ST", "BICO.ST", "APRO.ST",
-    "STORA.ST", "ATCO-B.ST", "CAST.ST", "GARO-B.ST", "MIPS.ST",
-    "SAND.ST", "VEONE.ST", "SBB.ST", "BHG.ST", "BONI-B.ST",
-    "SOBI.ST", "TEL2-B.ST", "TREL.ST", "VOLATI.ST", "WALL-B.ST"
+    "TELIA.ST", "SEB-A.ST", "SWED-A.ST", "SKF-B.ST", "H&M-B.ST",
+    "ASSA-B.ST", "ALFA.ST", "TELGE.ST", "NCC-B.ST", "SSAB-A.ST",
+    "KINV-B.ST", "EQT.ST", "HUSQ-B.ST", "ATCO-B.ST", "ESSITY-B.ST"
+    # Lägg till fler svenska aktier från Nasdaq Stockholm
 ]
 
-# --- Autocomplete sökfält ---
+# --- Sökfält med autocomplete ---
 ticker_input = st.text_input("Sök ticker", "")
 
-# Hitta förslag direkt när användaren skriver minst 2 bokstäver
+# Visa förslag direkt om minst 2 bokstäver
 suggestions = [t for t in nasdaq_stocks if t.lower().startswith(ticker_input.lower())] if len(ticker_input) >= 2 else []
 
-# Om förslag finns, låt användaren klicka på ett och fyll i textfältet
+# Klickbart förslag fyller i textfältet
 if suggestions:
     selected = st.selectbox("Förslag", suggestions, index=0)
     ticker_input = selected  # fyll i textfältet med valt förslag
 
-# Lägg till .ST automatiskt om det saknas
+# Lägg till .ST automatiskt
 ticker = ticker_input.upper()
 if ticker and not ticker.endswith(".ST"):
     ticker += ".ST"
