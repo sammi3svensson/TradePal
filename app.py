@@ -64,60 +64,62 @@ interval = interval_map[timeframe]
 period = period_map[timeframe]
 
 # --- Hämta och visa data ---
-if ticker:
-    try:
-        data = yf.Ticker(ticker).history(period=period, interval=interval)
-        if data.empty:
-            st.error(f"Inget data hittades för {ticker} i vald tidsram.")
-        else:
-            # Säkerställ Date-kolumn
-            if 'Date' in data.columns:
-                data['Date'] = pd.to_datetime(data['Date'])
-            else:
-                data.reset_index(inplace=True)
-                if 'Datetime' in data.columns:
-                    data['Date'] = pd.to_datetime(data['Datetime'])
-            
-            hover_text = [
-                f"{row['Date']}: Open={row['Open']}, High={row['High']}, Low={row['Low']}, Close={row['Close']}"
-                for _, row in data.iterrows()
-            ]
+try:
+    data = yf.Ticker(ticker).history(period=period, interval=interval)
 
-            if chart_type == "Candlestick":
-                fig = go.Figure(data=[go.Candlestick(
-                    x=data['Date'], open=data['Open'], high=data['High'],
-                    low=data['Low'], close=data['Close'], hovertext=hover_text, hoverinfo="text"
-                )])
-            else:
-                fig = go.Figure(data=[go.Scatter(
-                    x=data['Date'], y=data['Close'], mode='lines+markers',
-                    hovertext=hover_text, hoverinfo="text"
-                )])
-                
-    # Fix för intraday: använd 'Datetime' om 'Date' saknas
-    if 'Date' in data.columns:
-        data['Date'] = pd.to_datetime(data['Date'])
+    if data.empty:
+        st.error(f"Inget data hittades för {ticker} i vald tidsram.")
     else:
+        # Fix för intraday: använd 'Datetime' om 'Date' saknas
         data.reset_index(inplace=True)
         if 'Datetime' in data.columns:
             data['Date'] = pd.to_datetime(data['Datetime'])
+        elif 'Date' in data.columns:
+            data['Date'] = pd.to_datetime(data['Date'])
 
-    # --- Y-axel padding (ENDA ÄNDRINGEN) ---
-    price_min = data['Low'].min()
-    price_max = data['High'].max()
-    padding = (price_max - price_min) * 0.05
-    y_min = price_min - padding
-    y_max = price_max + padding
+        # --- Y-axel padding (ENDA ÄNDRINGEN) ---
+        price_min = data['Low'].min()
+        price_max = data['High'].max()
+        padding = (price_max - price_min) * 0.05
+        y_min = price_min - padding
+        y_max = price_max + padding
 
+        hover_text = [
+            f"{row['Date']}<br>"
+            f"Open: {row['Open']}<br>"
+            f"High: {row['High']}<br>"
+            f"Low: {row['Low']}<br>"
+            f"Close: {row['Close']}"
+            for _, row in data.iterrows()
+        ]
 
-            fig.update_layout(
-    title=f"{ticker} – {timeframe} trend",
-    xaxis_title="Datum",
-    yaxis_title="Pris",
-    yaxis=dict(range=[y_min, y_max])
-)
+        if chart_type == "Candlestick":
+            fig = go.Figure(data=[go.Candlestick(
+                x=data['Date'],
+                open=data['Open'],
+                high=data['High'],
+                low=data['Low'],
+                close=data['Close'],
+                hovertext=hover_text,
+                hoverinfo="text"
+            )])
+        else:
+            fig = go.Figure(data=[go.Scatter(
+                x=data['Date'],
+                y=data['Close'],
+                mode='lines+markers',
+                hovertext=hover_text,
+                hoverinfo="text"
+            )])
 
-            st.plotly_chart(fig, use_container_width=True)
+        fig.update_layout(
+            title=f"{ticker} – {timeframe} trend",
+            xaxis_title="Datum",
+            yaxis_title="Pris",
+            yaxis=dict(range=[y_min, y_max])
+        )
 
-    except Exception as e:
-        st.error(f"Fel vid hämtning av data: {e}")
+        st.plotly_chart(fig, use_container_width=True)
+
+except Exception as e:
+    st.error(f"Fel vid hämtning av data: {e}")
