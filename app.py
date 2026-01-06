@@ -89,6 +89,14 @@ try:
                 mode='lines'
             )])
 
+        # --- NY FIX: Hoppa över helger för vissa tidsperioder ---
+        if timeframe in ["1w", "1m", "3m"]:
+            fig.update_xaxes(
+                rangebreaks=[
+                    dict(bounds=["sat", "mon"])  # Hoppa över lör-sön
+                ]
+            )
+
         # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
         price_min = data['Low'].min()
         price_max = data['High'].max()
