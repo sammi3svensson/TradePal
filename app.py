@@ -93,15 +93,30 @@ if ticker:
                     x=data['Date'], y=data['Close'], mode='lines+markers',
                     hovertext=hover_text, hoverinfo="text"
                 )])
-# --- Y-axel padding (endast detta ändras) ---
-price_min = data['Low'].min()
-price_max = data['High'].max()
+else:
+    # Fix för intraday: använd 'Datetime' om 'Date' saknas
+    if 'Date' in data.columns:
+        data['Date'] = pd.to_datetime(data['Date'])
+    else:
+        data.reset_index(inplace=True)
+        if 'Datetime' in data.columns:
+            data['Date'] = pd.to_datetime(data['Datetime'])
 
-padding = (price_max - price_min) * 0.05  # 5% spelrum
-y_min = price_min - padding
-y_max = price_max + padding
+    # --- Y-axel padding (ENDA ÄNDRINGEN) ---
+    price_min = data['Low'].min()
+    price_max = data['High'].max()
+    padding = (price_max - price_min) * 0.05
+    y_min = price_min - padding
+    y_max = price_max + padding
 
-            fig.update_layout(title=f"{ticker} – {timeframe} trend", xaxis_title="Datum", yaxis_title="Pris", yaxis=dict(range=[y_min, y_max])
+
+            fig.update_layout(
+    title=f"{ticker} – {timeframe} trend",
+    xaxis_title="Datum",
+    yaxis_title="Pris",
+    yaxis=dict(range=[y_min, y_max])
+)
+
             st.plotly_chart(fig, use_container_width=True)
 
     except Exception as e:
