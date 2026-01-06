@@ -1,102 +1,104 @@
-# app.py - TradePal (Yahoo Finance)
 import streamlit as st
 import yfinance as yf
-import pandas as pd
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
-st.set_page_config(page_title="TradePal", layout="wide")
-
-# --- Sätt tema ---
-st.markdown("<h1 style='text-align:center;color:#4B0082;'>TradePal – Smart signalanalys för svenska aktier</h1>", unsafe_allow_html=True)
-
-# --- List of Swedish tickers for suggestions ---
-# Här kan man uppdatera med hela Nasdaq Stockholm listan
-nasdaq_st = [
-    "VOLV-B.ST","ERIC-B.ST","SAND.ST","SEB-A.ST","H&M-B.ST",
-    "ATCO-A.ST","SKF-B.ST","SWED-A.ST","SSAB-A.ST","TEL2-B.ST"
+# -----------------------------
+# Autocomplete tickerlista
+# -----------------------------
+nasdaq_stocks = [
+    "VOLV-B.ST", "ERIC-B.ST", "SAND.ST", "HM-B.ST", "ATCO-A.ST",
+    # Lägg till fler tickers här...
 ]
 
-# --- Sidebar för inställningar ---
-st.sidebar.header("Inställningar")
-ticker_input = st.sidebar.text_input("Sök ticker (minst 2 bokstäver för förslag)")
-suggestions = [t for t in nasdaq_st if ticker_input.upper() in t] if len(ticker_input) >= 2 else []
-selected_ticker = st.sidebar.selectbox("Välj ticker", suggestions) if suggestions else None
+# -----------------------------
+# Streamlit UI
+# -----------------------------
+st.set_page_config(page_title="TradePal", layout="wide")
+st.title("TradePal – Smart signalanalys för svenska aktier")
 
-if selected_ticker:
-    st.sidebar.markdown("**Signalinfo**:")
-    st.sidebar.markdown("""
-    - **Köp-Observera**: RSI < 30, Volymspik, Stöd/Motstånd, Trendvändning, Mean Reversion  
-      Poäng: 0-100  
-    - **Köp-Stark**: samma signaler men högre poäng  
-    - **Sälj-Observera**: RSI > 70, Volymspik, Stöd/Motstånd, Trendvändning, Mean Reversion  
-      Poäng: 0-100  
-    - **Sälj-Stark**: samma signaler men högre poäng
-    """)
+# Sökfält med autocomplete
+ticker_input = st.text_input("Sök ticker", "")
+suggestions = [t for t in nasdaq_stocks if t.lower().startswith(ticker_input.lower())] if len(ticker_input) >= 2 else []
 
-# --- Välj tidsram och graf ---
-timeframe = st.sidebar.selectbox("Tidsram", ["1d","3d","1w","1m","3m","6m","1y","Max"])
-chart_type = st.sidebar.radio("Graftyp", ["Candlestick", "Linje"])
+if suggestions:
+    ticker = st.selectbox("Välj ticker", suggestions)
+else:
+    ticker = ticker_input.upper() if ticker_input else None
 
-# --- Hämta data ---
-def fetch_data(ticker, period):
-    try:
-        yf_ticker = ticker if ticker.endswith(".ST") else ticker + ".ST"
-        data = yf.Ticker(yf_ticker).history(period=period, interval="1d")
-        if data.empty:
-            return None
-        data.reset_index(inplace=True)
-        data['Date'] = pd.to_datetime(data['Date'])
-        return data
-    except Exception as e:
-        st.error(f"Fel vid hämtning av data: {e}")
-        return None
+# Candlestick eller linje
+chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"])
+
+# Tidsram
+timeframe = st.selectbox("Välj tidsperiod", ["1d", "3d", "1w", "1m", "3m", "6m", "1y", "Max"])
+
+# -----------------------------
+# Mappa tidsram till yfinance-parametrar
+# -----------------------------
+interval_map = {
+    "1d": "5m",
+    "3d": "15m",
+    "1w": "1h",
+    "1m": "1d",
+    "3m": "1d",
+    "6m": "1d",
+    "1y": "1d",
+    "Max": "1d"
+}
 
 period_map = {
-    "1d": "5d",
-    "3d": "7d",
-    "1w": "1mo",
-    "1m": "3mo",
-    "3m": "6mo",
-    "6m": "1y",
-    "1y": "2y",
+    "1d": "1d",
+    "3d": "3d",
+    "1w": "7d",
+    "1m": "1mo",
+    "3m": "3mo",
+    "6m": "6mo",
+    "1y": "1y",
     "Max": "max"
 }
 
-if selected_ticker:
-    data = fetch_data(selected_ticker, period_map[timeframe])
-    if data is None or data.empty:
-        st.warning(f"Inget data hittades för {selected_ticker} i vald tidsram.")
-    else:
-        # --- Plotly graf ---
-        fig = go.Figure()
-        if chart_type == "Candlestick":
-            fig.add_trace(go.Candlestick(
-                x=data['Date'],
-                open=data['Open'],
-                high=data['High'],
-                low=data['Low'],
-                close=data['Close'],
-                name="Candlestick"
-            ))
+interval = interval_map[timeframe]
+period = period_map[timeframe]
+
+# -----------------------------
+# Hämta data
+# -----------------------------
+if ticker:
+    if not ticker.endswith(".ST"):
+        ticker += ".ST"
+
+    try:
+        data = yf.Ticker(ticker).history(period=period, interval=interval)
+        if data.empty:
+            st.error(f"Inget data hittades för {ticker} i vald tidsram.")
         else:
-            fig.add_trace(go.Scatter(
-                x=data['Date'],
-                y=data['Close'],
-                mode="lines+markers",
-                name="Linje"
-            ))
+            data.reset_index(inplace=True)
+            
+            # Tooltip: datum + tid + pris
+            hover_text = [
+                f"{row['Date']}: Open={row['Open']}, High={row['High']}, Low={row['Low']}, Close={row['Close']}"
+                for idx, row in data.iterrows()
+            ]
 
-        # --- Tooltip: pris & datum ---
-        fig.update_traces(
-            hovertemplate='Datum: %{x}<br>Pris: %{y:.2f} SEK<extra></extra>'
-        )
+            # Plot
+            if chart_type == "Candlestick":
+                fig = go.Figure(data=[go.Candlestick(
+                    x=data['Date'],
+                    open=data['Open'], high=data['High'],
+                    low=data['Low'], close=data['Close'],
+                    hovertext=hover_text,
+                    hoverinfo="text"
+                )])
+            else:
+                fig = go.Figure(data=[go.Scatter(
+                    x=data['Date'], y=data['Close'],
+                    mode='lines+markers',
+                    hovertext=hover_text,
+                    hoverinfo="text"
+                )])
 
-        fig.update_layout(
-            xaxis_title="Datum",
-            yaxis_title="Pris (SEK)",
-            template="plotly_dark",
-            height=600
-        )
+            fig.update_layout(title=f"{ticker} – {timeframe} trend", xaxis_title="Datum", yaxis_title="Pris")
+            st.plotly_chart(fig, use_container_width=True)
 
-        st.plotly_chart(fig, use_container_width=True)
+    except Exception as e:
+        st.error(f"Fel vid hämtning av data: {e}")
