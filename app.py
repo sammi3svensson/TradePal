@@ -102,23 +102,23 @@ else:
         ]
     )
 
-fig.update_xaxes(
+    fig.update_xaxes(
     rangebreaks=[
         dict(bounds=["sat", "mon"]),
         dict(bounds=[17, 9], pattern="hour")
     ]
-)
+    )
 
-fig.update_yaxes(range=[price_min - padding, price_max + padding])
+     fig.update_yaxes(range=[price_min - padding, price_max + padding])
 
-fig.update_layout(
+     fig.update_layout(
     title=f"{ticker} – {timeframe} trend",
     xaxis_title="Datum",
     yaxis_title="Pris",
     hovermode="x unified"
-)
+    )
 
-st.plotly_chart(fig, use_container_width=True)
+     st.plotly_chart(fig, use_container_width=True)
 
 
 except Exception as e:
