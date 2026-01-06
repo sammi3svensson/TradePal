@@ -92,11 +92,13 @@ try:
                 mode='lines'
             )])
 
-        # --- FIX: 1w, 1m, 3m, hoppa över helger + jämn fördelning på x-axeln ---
+        # --- FIX: 1w, 1m, 3m → jämn fördelning av candlesticksen utan glapp ---
         if timeframe in ["1w", "1m", "3m"]:
             fig.update_xaxes(
-                rangebreaks=[dict(bounds=["sat", "mon"])],  # Hoppa över lör-sön
-                dtick="D1"  # Placera candlesticksen proportionellt per dag
+                type="category",                     # jämn fördelning
+                categoryorder="category ascending",
+                tickvals=data['Date'],               # placera ticks på datumen
+                ticktext=[d.strftime("%Y-%m-%d") for d in data['Date']]  # visa datum
             )
 
         # --- Öka höjden på trendfönstret ---
