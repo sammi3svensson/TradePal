@@ -80,7 +80,12 @@ try:
                 open=data['Open'],
                 high=data['High'],
                 low=data['Low'],
-                close=data['Close']
+                close=data['Close'],
+                increasing_line_color='green',
+                decreasing_line_color='red',
+                whiskerwidth=0.2,
+                # Bredda candlesticksen manuellt för 1w, 1m, 3m
+                width=0.6 if timeframe in ["1w", "1m", "3m"] else None
             )])
         else:
             fig = go.Figure(data=[go.Scatter(
@@ -89,14 +94,10 @@ try:
                 mode='lines'
             )])
 
-        # --- NY FIX: Använd kategori för 1w, 1m, 3m för bredare candlesticks ---
+        # --- Hoppa över helger för 1w, 1m, 3m ---
         if timeframe in ["1w", "1m", "3m"]:
             fig.update_xaxes(
-                type="category",
-                rangebreaks=[dict(bounds=["sat", "mon"])],  # Hoppa över helger
-                tickmode="auto",
-                nticks=10,        # Max antal ticklabels
-                tickangle=-45     # Lutade labels för bättre läsbarhet
+                rangebreaks=[dict(bounds=["sat", "mon"])]
             )
 
         # --- Öka höjden på trendfönstret ---
