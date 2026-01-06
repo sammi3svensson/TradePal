@@ -1,117 +1,119 @@
 import streamlit as st
-import requests
 import pandas as pd
+import yfinance as yf
 import plotly.graph_objects as go
 
-# =========================
-# KONFIG
-# =========================
-st.set_page_config(page_title="TradePal", layout="wide")
-
-API_KEY = "0DHMYBG3KZ5DZEOJ"  # Din Alpha Vantage-nyckel
-
-# =========================
-# UI
-# =========================
-st.title("📊 TradePal – Smart signalanalys för svenska aktier")
-
-ticker_input = st.text_input("Sök svensk aktie (ex: VOLV-B, KINV-B)", "VOLV-B")
-timeframe = st.selectbox(
-    "Tidsperiod",
-    ["6 månader", "1 år", "3 år", "Max"]
+st.set_page_config(
+    page_title="TradePal – Smart signalanalys för svenska aktier",
+    layout="wide"
 )
 
-# =========================
-# HJÄLPFUNKTIONER
-# =========================
-def fetch_alpha_vantage(symbol):
-    symbol = symbol.upper()
-    if not symbol.endswith(".ST"):
-        symbol += ".ST"  # automatiskt för svenska tickers
+st.title("📈 TradePal – Smart signalanalys för svenska aktier")
 
-    url = (
-        "https://www.alphavantage.co/query?"
-        f"function=TIME_SERIES_DAILY_ADJUSTED"
-        f"&symbol={symbol}"
-        f"&apikey={API_KEY}"
-        f"&outputsize=full"
+# -------------------------------------------------
+# 1. Ladda HELA Nasdaq Stockholm automatiskt
+# -------------------------------------------------
+
+@st.cache_data
+def load_nasdaq_stockholm():
+    url = "https://raw.githubusercontent.com/datasets/nasdaq-listings/master/data/nasdaq-listed-symbols.csv"
+    df = pd.read_csv(url)
+
+    # Filtrera svenska aktier (.ST)
+    df = df[df["Symbol"].str.endswith(".ST")]
+
+    # Skapa visningsnamn utan .ST
+    df["CleanSymbol"] = df["Symbol"].str.replace(".ST", "", regex=False)
+
+    return df.sort_values("CleanSymbol")
+
+nasdaq_df = load_nasdaq_stockholm()
+
+# -------------------------------------------------
+# 2. Sökbar ticker-väljare (utan .ST)
+# -------------------------------------------------
+
+ticker_display = st.selectbox(
+    "🔎 Sök svensk aktie (skriv t.ex. VO, KINV, ATCO)",
+    options=nasdaq_df["CleanSymbol"].tolist()
+)
+
+# Lägg till .ST internt (osynligt för användaren)
+ticker = ticker_display + ".ST"
+
+# -------------------------------------------------
+# 3. Tidsintervall
+# -------------------------------------------------
+
+period = st.selectbox(
+    "Tidsperiod",
+    ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"],
+    index=3
+)
+
+# -------------------------------------------------
+# 4. Hämta data från Yahoo Finance
+# -------------------------------------------------
+
+@st.cache_data
+def load_price_data(ticker, period):
+    df = yf.download(
+        ticker,
+        period=period,
+        auto_adjust=True,
+        progress=False
     )
-
-    r = requests.get(url)
-    data = r.json()
-    
-    # DEBUG: visa API-respons
-    st.write("DEBUG: API-respons", data)
-
-    if "Time Series (Daily)" not in data:
-        return pd.DataFrame()
-
-    df = pd.DataFrame.from_dict(
-        data["Time Series (Daily)"],
-        orient="index"
-    )
-
-    df.index = pd.to_datetime(df.index)
-    df = df.sort_index()
-
-    df = df.rename(columns={
-        "1. open": "Open",
-        "2. high": "High",
-        "3. low": "Low",
-        "4. close": "Close",
-        "6. volume": "Volume"
-    })
-
-    df = df[["Open", "High", "Low", "Close", "Volume"]].astype(float)
     return df
 
+df = load_price_data(ticker, period)
 
-def filter_timeframe(df, tf):
-    if tf == "6 månader":
-        return df.last("180D")
-    if tf == "1 år":
-        return df.last("365D")
-    if tf == "3 år":
-        return df.last("1095D")
-    return df
+if df.empty:
+    st.error(f"Ingen data hittades för {ticker_display}")
+    st.stop()
 
+# -------------------------------------------------
+# 5. Candlestick-graf
+# -------------------------------------------------
 
-# =========================
-# HUVUDLOGIK
-# =========================
-if ticker_input:
-    with st.spinner("Hämtar data..."):
-        df = fetch_alpha_vantage(ticker_input)
+fig = go.Figure()
 
-    if df.empty:
-        st.error(f"Ingen data hittades för {ticker_input}. Kontrollera att tickern är korrekt och att du inte överskridit API-gränsen.")
-        st.stop()
+fig.add_trace(go.Candlestick(
+    x=df.index,
+    open=df["Open"],
+    high=df["High"],
+    low=df["Low"],
+    close=df["Close"],
+    name="Pris"
+))
 
-    df = filter_timeframe(df, timeframe)
+fig.update_layout(
+    title=f"{ticker_display} – Kursutveckling",
+    xaxis_title="Datum",
+    yaxis_title="Pris (SEK)",
+    template="plotly_dark",
+    height=600
+)
 
-    # =========================
-    # GRAF
-    # =========================
-    fig = go.Figure()
+st.plotly_chart(fig, use_container_width=True)
 
-    fig.add_trace(
-        go.Candlestick(
-            x=df.index,
-            open=df["Open"],
-            high=df["High"],
-            low=df["Low"],
-            close=df["Close"],
-            name="Pris"
-        )
-    )
+# -------------------------------------------------
+# 6. Info-box (placeholder för signaler)
+# -------------------------------------------------
 
-    fig.update_layout(
-        height=600,
-        template="plotly_dark",
-        title=f"{ticker_input} – Pris",
-        xaxis_rangeslider_visible=False
-    )
+st.info(
+    """
+**TradePal – Signalinfo (kommer i nästa steg)**
 
-    st.plotly_chart(fig, use_container_width=True)
+🟢 **Köp (Strong)**  
+🔴 **Sälj (Strong)**  
 
-    st.success(f"Visar {len(df)} datapunkter för {ticker_input}")
+Signaler kommer väga samman:
+- RSI
+- ADX
+- Volym
+- Trendstruktur
+- Mean Reversion
+
+Poängskala: **0–100**
+"""
+)
