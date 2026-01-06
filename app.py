@@ -93,7 +93,7 @@ if ticker:
                     x=data['Date'], y=data['Close'], mode='lines+markers',
                     hovertext=hover_text, hoverinfo="text"
                 )])
-else:
+                
     # Fix för intraday: använd 'Datetime' om 'Date' saknas
     if 'Date' in data.columns:
         data['Date'] = pd.to_datetime(data['Date'])
