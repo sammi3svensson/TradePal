@@ -92,15 +92,15 @@ try:
                 mode='lines'
             )])
 
-        # --- FIX: 1w, 1m, 3m → jämn fördelning + sparsamma datumetiketter ---
+        # --- FIX: 1w, 1m, 3m → jämn fördelning + snyggare tidvisning ---
         if timeframe in ["1w", "1m", "3m"]:
             fig.update_xaxes(
                 type="category",
                 categoryorder="category ascending",
-                tickvals=data['Date'],  
-                ticktext=[d.strftime("%Y-%m-%d") for d in data['Date']],
+                tickvals=data['Date'],
+                ticktext=[d.strftime("%H:%M") for d in data['Date']],  # Endast timme:minut
                 tickmode="auto",
-                nticks=10  # max 10 datumetiketter jämnt fördelade
+                nticks=10  # max 10 etiketter jämnt fördelade
             )
 
         # --- Öka höjden på trendfönstret ---
