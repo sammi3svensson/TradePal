@@ -76,39 +76,44 @@ try:
         )
 
         if chart_type == "Candlestick":
-            fig = go.Figure(data=[go.Candlestick(
-                x=data['Date'],
-                open=data['Open'],
-                high=data['High'],
-                low=data['Low'],
-                close=data['Close']
-            )])
-        else:
-            fig = go.Figure(data=[go.Scatter(
-                x=data['Date'],
-                y=data['Close'],
-                mode='lines'
-            )])
+    fig = go.Figure(data=[go.Candlestick(
+        x=data['Date'],
+        open=data['Open'],
+        high=data['High'],
+        low=data['Low'],
+        close=data['Close'],
+        hovertext=hover_text,
+        hoverinfo="text"
+    )])
+else:
+    fig = go.Figure(data=[go.Scatter(
+        x=data['Date'],
+        y=data['Close'],
+        mode='lines+markers',
+        hovertext=hover_text,
+        hoverinfo="text"
+    )])
 
-        # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
-        price_min = data['Low'].min()
-        price_max = data['High'].max()
+# 🔹 TA BORT HELGER + NATT (DETTA VAR DET DU FRÅGADE EFTER)
+fig.update_xaxes(
+    rangebreaks=[
+        dict(bounds=["sat", "mon"]),          # helger
+        dict(bounds=[17, 9], pattern="hour")  # natt (09–17)
+    ]
+)
 
-        pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
-        pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
+# 🔹 Y-AXEL MED LUFT (som du redan fixat)
+fig.update_yaxes(range=[price_min - padding, price_max + padding])
 
-        fig.update_layout(
-            title=f"{ticker} – {timeframe} trend",
-            xaxis_title="Datum",
-            yaxis_title="Pris",
-            yaxis=dict(
-                range=[price_min - pad_down, price_max + pad_up],
-                autorange=False,
-                rangemode="normal"
-            )
-        )
+fig.update_layout(
+    title=f"{ticker} – {timeframe} trend",
+    xaxis_title="Datum",
+    yaxis_title="Pris",
+    hovermode="x unified"
+)
 
-        st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)
+
 
 except Exception as e:
     st.error(f"Fel vid hämtning av data: {e}")
