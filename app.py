@@ -6,33 +6,40 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="TradePal", layout="wide")
 st.title("TradePal – Smart signalanalys för svenska aktier")
 
-# --- Svenska Nasdaq aktier ---
-nasdaq_stocks = [
-    "VOLV-B.ST", "ERIC-B.ST", "SAND.ST", "HM-B.ST", "ATCO-A.ST",
-    "TELIA.ST", "SEB-A.ST", "SWED-A.ST", "SKF-B.ST", "H&M-B.ST",
-    "ASSA-B.ST", "ALFA.ST", "TELGE.ST", "NCC-B.ST", "SSAB-A.ST",
-    "KINV-B.ST", "EQT.ST", "HUSQ-B.ST", "ATCO-B.ST", "ESSITY-B.ST"
-]
+# --- Svenska Nasdaq aktier med företagsnamn ---
+nasdaq_stocks = {
+    "VOLVO AB": "VOLV-B.ST",
+    "Ericsson": "ERIC-B.ST",
+    "Sandvik": "SAND.ST",
+    "H&M": "HM-B.ST",
+    "AstraZeneca": "ATCO-A.ST",
+    "Telia": "TELIA.ST",
+    "SEB": "SEB-A.ST",
+    "Swedbank": "SWED-A.ST",
+    "SKF": "SKF-B.ST",
+    "Assa Abloy": "ASSA-B.ST",
+    "Alfa Laval": "ALFA.ST",
+    "Telge": "TELGE.ST",
+    "NCC": "NCC-B.ST",
+    "SSAB": "SSAB-A.ST",
+    "Investor": "KINV-B.ST",
+    "EQT": "EQT.ST",
+    "Husqvarna": "HUSQ-B.ST",
+    "Atlas Copco": "ATCO-B.ST",
+    "Essity": "ESSITY-B.ST"
+}
 
-# --- Google-style autocomplete ---
-if "ticker_input" not in st.session_state:
-    st.session_state.ticker_input = ""
+# --- Sökfält ---
+ticker_input = st.text_input("Sök ticker", "")
 
-def set_ticker_input(t):
-    st.session_state.ticker_input = t
-
-st.text_input("Sök ticker", key="ticker_input")
-
-# Visa förslag om minst 2 bokstäver
-suggestions = [t for t in nasdaq_stocks if t.lower().startswith(st.session_state.ticker_input.lower())] if len(st.session_state.ticker_input) >= 2 else []
-
-for s in suggestions:
-    if st.button(s, key=s):
-        set_ticker_input(s)
-
-ticker = st.session_state.ticker_input.upper()
+ticker = ticker_input.upper()
 if ticker and not ticker.endswith(".ST"):
     ticker += ".ST"
+
+# --- Lista med aktier under en expander ---
+with st.expander("Stockholmsbörsen"):
+    for name, symbol in nasdaq_stocks.items():
+        st.write(f"{name} – {symbol.replace('.ST','')}")
 
 # --- Grafinställningar ---
 chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"])
