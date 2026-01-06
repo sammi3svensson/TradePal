@@ -1,103 +1,109 @@
 import streamlit as st
-import requests
 import pandas as pd
-import plotly.graph_objects as go
+import requests
+import plotly.graph_objs as go
 from datetime import datetime, timedelta
 
-FINNHUB_API_KEY = "d5e8729r01qjckl2g1bgd5e8729r01qjckl2g1c0"
+# --- Din Finnhub API-nyckel ---
+API_KEY = "d5e8729r01qjckl2g1bgd5e8729r01qjckl2c0"
 
 st.set_page_config(page_title="TradePal", layout="wide")
 
 st.title("TradePal – Smart signalanalys för svenska aktier")
 
-# -------------------------
-# Ladda Nasdaq Stockholm aktier
-# -------------------------
-@st.cache_data
-def load_nasdaq_stocks():
-    url = f"https://finnhub.io/api/v1/stock/symbol?exchange=STO&token={FINNHUB_API_KEY}"
-    try:
-        resp = requests.get(url).json()
-    except Exception as e:
-        st.error(f"Fel vid API-anrop: {e}")
-        return []
+# --- Hårdkodad lista med svenska tickers ---
+swedish_stocks = [
+    "VOLV-B", "ERIC-B", "SAND.ST", "ATCO-A", "ASSA-B", "H&M-B", "SEB-A", 
+    "SKF-B", "TELIA", "ALFA", "ESSITY-B", "SWED-A", "NDA-SEK", "KINV-B",
+    "SCA-B", "TEL2-B", "INVE-B", "HM-B", "STORA-B", "NIBE-B"
+    # Lägg till fler tickers här
+]
 
-    if not isinstance(resp, list):
-        st.error(f"Fel vid hämtning av aktier: {resp}")
-        return []
+# --- Sökfält med autocomplete ---
+ticker_input = st.text_input(
+    "Sök aktie (minst 2 bokstäver):"
+)
 
-    symbols = [s['symbol'] for s in resp if s.get('type') == 'common']
-    return symbols
+if len(ticker_input) >= 2:
+    matches = [s for s in swedish_stocks if s.startswith(ticker_input.upper())]
+else:
+    matches = []
 
-nasdaq_stocks = load_nasdaq_stocks()
+selected_ticker = st.selectbox("Välj aktie från förslag", matches)
 
-# -------------------------
-# Sökfält med autocomplete
-# -------------------------
-def ticker_autocomplete(input_text, symbols):
-    input_text = input_text.upper()
-    if len(input_text) < 2:
-        return []
-    return [s for s in symbols if s.startswith(input_text)]
+# --- Välj tidsintervall ---
+time_interval = st.selectbox("Välj tidsintervall", ["1d", "1w", "1mo", "3mo", "6mo", "1y", "max"])
+chart_type = st.radio("Välj graf", ["Candlestick", "Linje"])
 
-input_ticker = st.text_input("Sök aktie (minst 2 bokstäver)", "").upper()
-suggestions = ticker_autocomplete(input_ticker, nasdaq_stocks)
-selected_ticker = st.selectbox("Välj aktie från förslag", suggestions) if suggestions else None
+def fetch_finnhub_data(symbol, interval):
+    """Hämtar historik från Finnhub."""
+    now = int(datetime.now().timestamp())
+    if interval == "1d":
+        resolution = "5"   # 5-minuters
+        start = int((datetime.now() - timedelta(days=1)).timestamp())
+    elif interval == "1w":
+        resolution = "15"  # 15-minuters
+        start = int((datetime.now() - timedelta(7)).timestamp())
+    elif interval == "1mo":
+        resolution = "30"  # 30-minuters
+        start = int((datetime.now() - timedelta(30)).timestamp())
+    elif interval == "3mo":
+        resolution = "60"  # 1-timmes
+        start = int((datetime.now() - timedelta(90)).timestamp())
+    elif interval == "6mo":
+        resolution = "60"  # 1-timmes
+        start = int((datetime.now() - timedelta(180)).timestamp())
+    elif interval in ["1y", "max"]:
+        resolution = "D"   # Daglig
+        start = 0
+    else:
+        resolution = "D"
+        start = 0
 
-# -------------------------
-# Hämta historisk data
-# -------------------------
-def get_stock_data(ticker, interval='1d', outputsize='6m'):
-    url = f"https://finnhub.io/api/v1/quote?symbol={ticker}&token={FINNHUB_API_KEY}"
-    try:
-        data = requests.get(url).json()
-    except:
+    url = f"https://finnhub.io/api/v1/stock/candle?symbol={symbol}.ST&resolution={resolution}&from={start}&to={now}&token={API_KEY}"
+    resp = requests.get(url).json()
+
+    if resp.get("s") != "ok":
+        st.error(f"Inget data hittades för {symbol} ({resp})")
         return None
-    if "c" not in data:
-        return None
-    # Dummy dataframe för exempel
+
     df = pd.DataFrame({
-        "Datetime": [datetime.now()],
-        "Open": [data['o']],
-        "High": [data['h']],
-        "Low": [data['l']],
-        "Close": [data['c']],
-        "Volume": [data['v']]
+        "Datetime": [datetime.fromtimestamp(ts) for ts in resp["t"]],
+        "Open": resp["o"],
+        "High": resp["h"],
+        "Low": resp["l"],
+        "Close": resp["c"],
+        "Volume": resp["v"]
     })
     return df
 
-# -------------------------
-# Visa graf
-# -------------------------
 if selected_ticker:
-    df = get_stock_data(selected_ticker)
-    if df is None or df.empty:
-        st.error(f"Ingen data hittades för {selected_ticker}")
-    else:
-        fig = go.Figure()
-
-        fig.add_trace(go.Candlestick(
-            x=df['Datetime'],
-            open=df['Open'],
-            high=df['High'],
-            low=df['Low'],
-            close=df['Close'],
-            name="Candlestick"
-        ))
-
-        fig.add_trace(go.Scatter(
-            x=df['Datetime'],
-            y=df['Close'],
-            mode='lines',
-            name="Linje"
-        ))
+    data = fetch_finnhub_data(selected_ticker, time_interval)
+    if data is not None and not data.empty:
+        if chart_type == "Candlestick":
+            fig = go.Figure(data=[go.Candlestick(
+                x=data['Datetime'],
+                open=data['Open'],
+                high=data['High'],
+                low=data['Low'],
+                close=data['Close'],
+                increasing_line_color='green',
+                decreasing_line_color='red',
+                hovertext=[f"Pris: {c}<br>Datum: {d.strftime('%Y-%m-%d %H:%M')}" for c,d in zip(data['Close'], data['Datetime'])]
+            )])
+        else:
+            fig = go.Figure(data=[go.Scatter(
+                x=data['Datetime'],
+                y=data['Close'],
+                mode='lines+markers',
+                hovertext=[f"Pris: {c}<br>Datum: {d.strftime('%Y-%m-%d %H:%M')}" for c,d in zip(data['Close'], data['Datetime'])]
+            )])
 
         fig.update_layout(
-            title=f"{selected_ticker} trend",
-            xaxis_title="Datum",
+            title=f"{selected_ticker} – {time_interval} trend",
+            xaxis_title="Tid",
             yaxis_title="Pris (SEK)",
-            xaxis_rangeslider_visible=False,
-            hovermode="x unified"
+            hovermode="x",
+            template="plotly_dark"
         )
-
         st.plotly_chart(fig, use_container_width=True)
