@@ -118,12 +118,12 @@ try:
             )
 
         if interval != "1d":
-    fig.update_xaxes(
-        rangebreaks=[
-            dict(bounds=["sat", "mon"]),
-            dict(bounds=[17, 9], pattern="hour")
-        ]
-    )
+            fig.update_xaxes(
+               rangebreaks=[
+               dict(bounds=["sat", "mon"]),
+               dict(bounds=[17, 9], pattern="hour")
+         ]
+     )
 else:
     fig.update_xaxes(
         rangebreaks=[
