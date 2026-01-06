@@ -1,114 +1,81 @@
 import streamlit as st
-import yfinance as yf
 import pandas as pd
+import yfinance as yf
 import plotly.graph_objects as go
-from datetime import timedelta
 
-# ======================
-# APP CONFIG
-# ======================
-st.set_page_config(
-    page_title="TradePal",
-    layout="wide"
-)
+st.set_page_config(page_title="TradePal", layout="wide")
+st.title("📈 TradePal – Svenska aktier")
 
-st.title("📊 TradePal – Smart signalanalys för svenska aktier")
+# -------------------------------------------------
+# Ticker-lista (verifierad)
+# -------------------------------------------------
 
-# ======================
-# SIDEBAR – INPUT
-# ======================
-with st.sidebar:
-    st.header("🔍 Sök aktie")
-
-    ticker = st.text_input(
-        "Ticker (ex: KINV-B.ST, VOLV-B.ST)",
-        value="KINV-B.ST"
-    )
-
-    timeframe = st.selectbox(
-        "Tidsperiod",
-        ["1D", "3D", "1W", "1M", "3M", "6M", "1Y", "MAX"],
-        index=5
-    )
-
-    chart_type = st.radio(
-        "Graftyp",
-        ["Linjegraf", "Candlestick"],
-        horizontal=True
-    )
-
-# ======================
-# INFOBOX – SIGNALMODELL
-# ======================
-st.markdown("""
-### 🧠 Signalmodell (under utveckling)
-
-TradePal använder en **poängbaserad modell (0–100)**.
-
-**KÖP (bottenlogik)**  
-- RSI < 30 → 25p  
-- Volymspik → 20p  
-- Stöd-nivå → 30p  
-- Mean reversion → 25p  
-
-**SÄLJ (topplogik)**  
-- RSI > 70 → 25p  
-- Volymspik → 20p  
-- Motstånd → 30p  
-- Trendutmattning → 25p  
-
-🟡 Observera: 60–74  
-🟢 Stark signal: 75–100  
-
-> *Inga signaler visas ännu – redo för backtesting.*
-""")
-
-st.divider()
-
-# ======================
-# DATAHÄMTNING
-# ======================
-@st.cache_data
-def load_data(ticker):
-    df = yf.download(ticker, period="max")
-    df.dropna(inplace=True)
-    df = df.sort_index()
-    return df
-
-try:
-    df = load_data(ticker)
-except:
-    st.error("❌ Kunde inte hämta data för vald ticker.")
-    st.stop()
-
-if df.empty:
-    st.error("❌ Ingen data hittades.")
-    st.stop()
-
-# ======================
-# TIDSRAM-FILTER
-# ======================
-TIMEFRAME_MAP = {
-    "1D": 1,
-    "3D": 3,
-    "1W": 7,
-    "1M": 30,
-    "3M": 90,
-    "6M": 180,
-    "1Y": 365
+tickers = {
+    "VOLV-B": "Volvo B",
+    "ATCO-A": "Atlas Copco A",
+    "ATCO-B": "Atlas Copco B",
+    "ERIC-B": "Ericsson B",
+    "HM-B": "H&M B",
+    "INVE-B": "Investor B",
+    "KINV-B": "Kinnevik B",
+    "SAND": "Sandvik",
+    "SKF-B": "SKF B"
 }
 
-if timeframe != "MAX":
-    end_date = df.index.max()
-    start_date = end_date - timedelta(days=TIMEFRAME_MAP[timeframe])
-    df = df[df.index >= start_date]
+# -------------------------------------------------
+# UI
+# -------------------------------------------------
 
-# ======================
-# GRAF (INGA SIGNALER ÄN)
-# ======================
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    ticker_clean = st.selectbox(
+        "Aktie",
+        options=list(tickers.keys()),
+        format_func=lambda x: f"{x} – {tickers[x]}"
+    )
+
+with col2:
+    period = st.selectbox(
+        "Tidsperiod",
+        ["1mo", "3mo", "6mo", "1y", "2y", "5y", "max"],
+        index=3
+    )
+
+with col3:
+    chart_type = st.selectbox(
+        "Diagramtyp",
+        ["Candlestick", "Linje"]
+    )
+
+ticker = ticker_clean + ".ST"
+
+# -------------------------------------------------
+# Datahämtning
+# -------------------------------------------------
+
+@st.cache_data
+def load_data(ticker, period):
+    df = yf.download(
+        ticker,
+        period=period,
+        progress=False
+    )
+    return df
+
+df = load_data(ticker, period)
+
+if df.empty:
+    st.error("Ingen data hittades – Yahoo Finance svarade tomt.")
+    st.stop()
+
+# -------------------------------------------------
+# Graf (robust)
+# -------------------------------------------------
+
 fig = go.Figure()
 
-if chart_type == "Candlestick":
+if chart_type == "Candlestick" and {"Open","High","Low","Close"}.issubset(df.columns):
     fig.add_trace(go.Candlestick(
         x=df.index,
         open=df["Open"],
@@ -122,15 +89,32 @@ else:
         x=df.index,
         y=df["Close"],
         mode="lines",
-        name="Pris"
+        name="Stängningspris"
     ))
 
 fig.update_layout(
-    height=650,
-    margin=dict(l=40, r=40, t=40, b=40),
-    xaxis_rangeslider_visible=False
+    template="plotly_dark",
+    height=600,
+    title=f"{ticker_clean} – Kursutveckling"
 )
 
 st.plotly_chart(fig, use_container_width=True)
 
-st.caption("🔧 Inga köp/sälj-signaler visas ännu – signal engine kopplas på i nästa steg.")
+# -------------------------------------------------
+# Info (placeholder)
+# -------------------------------------------------
+
+st.info(
+    """
+**TradePal – nästa steg**
+
+✔ Stabil data  
+✔ Valbar tidsperiod  
+✔ Candlestick / linje  
+
+🔜 Nästa:
+- Köp / Sälj-signaler
+- Poängsystem (0–100)
+- Backtesting
+"""
+)
