@@ -96,10 +96,10 @@ try:
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
                 # Visa dag-månad för 1w och 1m
-                tick_labels = pd.to_datetime(data['Date']).strftime('%d-%m')
+                tick_labels = data['Date'].dt.strftime('%d-%m')
             else:  # 3m
-                # Visa bara timme:minut för 3m
-                tick_labels = pd.to_datetime(data['Date']).strftime('%H:%M')
+                # Visa timme:minut för 3m
+                tick_labels = data['Date'].dt.strftime('%H:%M')
 
             fig.update_xaxes(
                 type="category",
