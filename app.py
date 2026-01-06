@@ -90,11 +90,20 @@ try:
             )])
 
         # --- NY FIX: Hoppa över helger OCH använd kategori för 1w, 1m, 3m ---
+        # Lägg till bättre ticklabels och lutning
         if timeframe in ["1w", "1m", "3m"]:
             fig.update_xaxes(
                 rangebreaks=[dict(bounds=["sat", "mon"])],
-                type="category"  # Viktigt för bredare candlesticks
+                type="category",
+                tickmode="auto",
+                nticks=10,
+                tickangle=-45
             )
+
+        # --- Öka höjden på trendfönstret ---
+        fig.update_layout(
+            height=500
+        )
 
         # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
         price_min = data['Low'].min()
