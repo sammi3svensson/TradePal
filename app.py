@@ -92,10 +92,11 @@ try:
                 mode='lines'
             )])
 
-        # --- NY FIX: Hoppa över helger för 1w, 1m, 3m, behåll x-axel som datum ---
+        # --- FIX: 1w, 1m, 3m, hoppa över helger + jämn fördelning på x-axeln ---
         if timeframe in ["1w", "1m", "3m"]:
             fig.update_xaxes(
-                rangebreaks=[dict(bounds=["sat", "mon"])]
+                rangebreaks=[dict(bounds=["sat", "mon"])],  # Hoppa över lör-sön
+                dtick="D1"  # Placera candlesticksen proportionellt per dag
             )
 
         # --- Öka höjden på trendfönstret ---
