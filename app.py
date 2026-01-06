@@ -15,7 +15,7 @@ st.title("TradePal – Smart signalanalys för svenska aktier")
 # -------------------------
 @st.cache_data
 def load_nasdaq_stocks():
-    url = f"https://finnhub.io/api/v1/stock/symbol?exchange=STO&token={FINNHUB_API_KEY}"
+    url = f"https://finnhub.io/api/v1/stock/symbol?exchange=STO&token={d5e8729r01qjckl2g1bgd5e8729r01qjckl2g1c0}"
     try:
         resp = requests.get(url).json()
     except Exception as e:
