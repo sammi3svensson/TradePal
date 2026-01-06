@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="TradePal", layout="wide")
 st.title("TradePal – Smart signalanalys för svenska aktier")
 
-# Lista över svenska aktier på Nasdaq Stockholm (exempel, ca 50 aktier)
+# Lista svenska aktier (exempel)
 nasdaq_stocks = [
     "VOLV-B.ST", "ERIC-B.ST", "SAND.ST", "HM-B.ST", "ATCO-A.ST",
     "SHB-A.ST", "SWED-A.ST", "ABB.ST", "INVE-B.ST", "TELIA.ST",
@@ -19,52 +19,52 @@ nasdaq_stocks = [
     "SAND.ST", "VEONE.ST", "SBB.ST", "BHG.ST", "BONI-B.ST",
     "SOBI.ST", "TEL2-B.ST", "TREL.ST", "VOLATI.ST", "WALL-B.ST"
 ]
-
 # --- Autocomplete sökfält ---
-ticker_input = st.text_input("Skriv ticker", "")
+ticker_input = st.text_input("Sök ticker", "")
+
+# Hitta förslag direkt när användaren skriver minst 2 bokstäver
 suggestions = [t for t in nasdaq_stocks if t.lower().startswith(ticker_input.lower())] if len(ticker_input) >= 2 else []
 
-ticker = None
+# Om förslag finns, låt användaren klicka på ett och fyll i textfältet
 if suggestions:
-    ticker = st.selectbox("Välj från förslag", suggestions, index=0)
-elif ticker_input:
-    ticker = ticker_input.upper()
+    selected = st.selectbox("Förslag", suggestions, index=0)
+    ticker_input = selected  # fyll i textfältet med valt förslag
 
-# --- Inställningar ---
+# Lägg till .ST automatiskt om det saknas
+ticker = ticker_input.upper()
+if ticker and not ticker.endswith(".ST"):
+    ticker += ".ST"
+
+# --- Grafinställningar ---
 chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"])
 timeframe = st.selectbox("Välj tidsperiod", ["1d", "1w", "1m", "3m", "6m", "1y", "Max"])
 
-interval_map = {"1d": "5m", "1w": "15m", "1m": "30m", "3m": "30m", "6m": "1h", "1y": "1d", "Max": "1d"}
+interval_map = {"1d": "5m", "1w": "1h", "1m": "1d", "3m": "1d", "6m": "1h", "1y": "1d", "Max": "1d"}
 period_map = {"1d": "1d", "1w": "7d", "1m": "1mo", "3m": "3mo", "6m": "6mo", "1y": "1y", "Max": "max"}
 
 interval = interval_map[timeframe]
 period = period_map[timeframe]
 
-# --- Hämta data ---
+# --- Hämta och visa data ---
 if ticker:
-    if not ticker.endswith(".ST"):
-        ticker += ".ST"
     try:
         data = yf.Ticker(ticker).history(period=period, interval=interval)
         if data.empty:
             st.error(f"Inget data hittades för {ticker} i vald tidsram.")
         else:
-            # Reset index om 'Datetime' finns
-            data.reset_index(inplace=True)
-            if 'Date' not in data.columns and 'Datetime' in data.columns:
-                data['Date'] = pd.to_datetime(data['Datetime'])
+            # Säkerställ Date-kolumn
+            if 'Date' in data.columns:
+                data['Date'] = pd.to_datetime(data['Date'])
+            else:
+                data.reset_index(inplace=True)
+                if 'Datetime' in data.columns:
+                    data['Date'] = pd.to_datetime(data['Datetime'])
             
-            # Tooltip med datum, tid och pris på separata rader
             hover_text = [
-                f"Datum & tid: {row['Date'].strftime('%Y-%m-%d %H:%M:%S')}<br>"
-                f"Open: {row['Open']}<br>"
-                f"High: {row['High']}<br>"
-                f"Low: {row['Low']}<br>"
-                f"Close: {row['Close']}"
+                f"{row['Date']}: Open={row['Open']}, High={row['High']}, Low={row['Low']}, Close={row['Close']}"
                 for _, row in data.iterrows()
             ]
 
-            # Candlestick eller linje
             if chart_type == "Candlestick":
                 fig = go.Figure(data=[go.Candlestick(
                     x=data['Date'], open=data['Open'], high=data['High'],
