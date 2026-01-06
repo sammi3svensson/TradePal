@@ -3,6 +3,7 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 
+# --- Streamlit setup ---
 st.set_page_config(page_title="TradePal", layout="wide")
 st.title("TradePal – Smart signalanalys för svenska aktier")
 
@@ -24,7 +25,7 @@ def get_yahoo_data(ticker, period="1y", interval="1d"):
         df = yf_ticker.history(period=period, interval=interval)
         if df.empty:
             return None
-        df.reset_index(inplace=True)
+        df.reset_index(inplace=True)  # Ser till att 'Date' alltid finns
         return df
     except Exception as e:
         st.error(f"Fel vid hämtning av data: {e}")
@@ -45,11 +46,12 @@ interval = interval_map.get(timeframe, "1d")
 
 # --- Hämta data ---
 data = get_yahoo_data(ticker_input, period=timeframe, interval=interval)
-if data is None:
+
+if data is None or data.empty:
     st.warning(f"Ingen data hittades för {ticker_input}")
     st.stop()
 
-# --- Skapa graf ---
+# --- Plotly graf ---
 fig = go.Figure()
 
 if chart_type == "Linje":
