@@ -89,20 +89,15 @@ try:
                 mode='lines'
             )])
 
-        # --- NY FIX: Hoppa över helger OCH använd kategori för 1w, 1m, 3m ---
-        # Lägg till bättre ticklabels och lutning
+        # --- NY FIX: Hoppa över helger för 1w, 1m, 3m utan category ---
         if timeframe in ["1w", "1m", "3m"]:
             fig.update_xaxes(
-                rangebreaks=[dict(bounds=["sat", "mon"])],
-                type="category",
-                tickmode="auto",
-                nticks=10,
-                tickangle=-45
+                rangebreaks=[dict(bounds=["sat", "mon"])]
             )
 
         # --- Öka höjden på trendfönstret ---
         fig.update_layout(
-            height=500
+            height=700
         )
 
         # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
