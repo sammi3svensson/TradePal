@@ -32,14 +32,21 @@ nasdaq_stocks = {
 # --- Sökfält ---
 ticker_input = st.text_input("Sök ticker", "")
 
-ticker = ticker_input.upper()
-if ticker and not ticker.endswith(".ST"):
-    ticker += ".ST"
+# Om användaren inte skrivit in nåt men klickat på knapp lagras tickern här
+if "selected_ticker" not in st.session_state:
+    st.session_state.selected_ticker = ""
 
-# --- Lista med aktier under en expander ---
+# --- Lista med bolag som knappar i expander ---
 with st.expander("Stockholmsbörsen"):
     for name, symbol in nasdaq_stocks.items():
-        st.write(f"{name} – {symbol.replace('.ST','')}")
+        if st.button(f"{name} – {symbol.replace('.ST','')}"):
+            st.session_state.selected_ticker = symbol
+            ticker_input = symbol.replace(".ST", "")  # fyll inputfältet visuellt också
+
+# Bestäm vilken ticker som ska användas
+ticker = st.session_state.selected_ticker if st.session_state.selected_ticker else ticker_input.upper()
+if ticker and not ticker.endswith(".ST"):
+    ticker += ".ST"
 
 # --- Grafinställningar ---
 chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"])
