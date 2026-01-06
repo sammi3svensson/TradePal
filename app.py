@@ -83,9 +83,7 @@ try:
                 close=data['Close'],
                 increasing_line_color='green',
                 decreasing_line_color='red',
-                whiskerwidth=0.2,
-                # Bredda candlesticksen manuellt för 1w, 1m, 3m
-                width=0.6 if timeframe in ["1w", "1m", "3m"] else None
+                whiskerwidth=0.2
             )])
         else:
             fig = go.Figure(data=[go.Scatter(
@@ -94,7 +92,7 @@ try:
                 mode='lines'
             )])
 
-        # --- Hoppa över helger för 1w, 1m, 3m ---
+        # --- NY FIX: Hoppa över helger för 1w, 1m, 3m, behåll x-axel som datum ---
         if timeframe in ["1w", "1m", "3m"]:
             fig.update_xaxes(
                 rangebreaks=[dict(bounds=["sat", "mon"])]
