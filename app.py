@@ -101,11 +101,8 @@ try:
             title=f"{ticker} – {timeframe} trend",
             xaxis_title="Datum",
             yaxis_title="Pris",
-            yaxis=dict(
-                range=[price_min - pad_down, price_max + pad_up],
-                autorange=False,
-                rangemode="normal"
-            )
+            yaxis=dict(range=[price_min - pad_down, price_max + pad_up], autorange=False, rangemode="normal")
+            
          fig.update_xaxes(
              rangebreaks=[
              dict(bounds=["sat", "mon"]),   # ta bort helger
