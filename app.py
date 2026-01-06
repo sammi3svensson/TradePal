@@ -98,8 +98,11 @@ try:
 
         # ✅ Y-AXEL FIX – MÅSTE LIGGA HÄR
         price_min = data['Low'].min()
-        price_max = data['High'].max()
-        padding = max((price_max - price_min) * 0.15, price_max * 0.005)
+price_max = data['High'].max()
+
+pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
+pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
+
 
 
         fig.update_layout(
@@ -107,9 +110,11 @@ try:
     xaxis_title="Datum",
     yaxis_title="Pris",
     yaxis=dict(
-        range=[price_min - padding, price_max + padding],
-        autorange=False
-    )
+    range=[price_min - pad_down, price_max + pad_up],
+    autorange=False,
+    rangemode="normal"
+)
+
 )
 
 
