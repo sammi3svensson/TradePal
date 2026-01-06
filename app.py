@@ -66,30 +66,14 @@ period = period_map[timeframe]
 # --- Hämta och visa data ---
 try:
     data = yf.Ticker(ticker).history(period=period, interval=interval)
-
     if data.empty:
         st.error(f"Inget data hittades för {ticker} i vald tidsram.")
     else:
-        # Fix för intraday: använd 'Datetime' om 'Date' saknas
         data.reset_index(inplace=True)
-        if 'Datetime' in data.columns:
-            data['Date'] = pd.to_datetime(data['Datetime'])
-        elif 'Date' in data.columns:
-            data['Date'] = pd.to_datetime(data['Date'])
-
-        # --- Y-axel padding (ENDA ÄNDRINGEN) ---
-        price_min = data['Low'].min()
-        price_max = data['High'].max()
-        padding = (price_max - price_min) * 0.05
-        y_min = price_min - padding
-        y_max = price_max + padding
+        data['Date'] = pd.to_datetime(data['Datetime'] if 'Datetime' in data.columns else data['Date'])
 
         hover_text = [
-            f"{row['Date']}<br>"
-            f"Open: {row['Open']}<br>"
-            f"High: {row['High']}<br>"
-            f"Low: {row['Low']}<br>"
-            f"Close: {row['Close']}"
+            f"{row['Date']}<br>Open: {row['Open']}<br>High: {row['High']}<br>Low: {row['Low']}<br>Close: {row['Close']}"
             for _, row in data.iterrows()
         ]
 
@@ -107,24 +91,24 @@ try:
             fig = go.Figure(data=[go.Scatter(
                 x=data['Date'],
                 y=data['Close'],
-                mode='lines+markers',
+                mode='lines',
                 hovertext=hover_text,
                 hoverinfo="text"
             )])
 
- # --- Y-axel padding (ENDAST DETTA) ---
-price_min = data['Low'].min()
-price_max = data['High'].max()
-padding = (price_max - price_min) * 0.05
+        # ✅ Y-AXEL FIX – MÅSTE LIGGA HÄR
+        price_min = data['Low'].min()
+        price_max = data['High'].max()
+        padding = (price_max - price_min) * 0.05
 
-fig.update_layout(
-    title=f"{ticker} – {timeframe} trend",
-    xaxis_title="Datum",
-    yaxis_title="Pris",
-    yaxis=dict(range=[price_min - padding, price_max + padding])
-)
+        fig.update_layout(
+            title=f"{ticker} – {timeframe} trend",
+            xaxis_title="Datum",
+            yaxis_title="Pris",
+            yaxis=dict(range=[price_min - padding, price_max + padding])
+        )
 
-st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
 
 except Exception as e:
     st.error(f"Fel vid hämtning av data: {e}")
