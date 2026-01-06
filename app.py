@@ -57,7 +57,7 @@ if ticker and not ticker.endswith(".ST"):
 chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"])
 timeframe = st.selectbox("Välj tidsperiod", ["1d", "1w", "1m", "3m", "6m", "1y", "Max"])
 
-interval_map = {"1d": "5m", "1w": "15m", "1m": "30m", "3m": "1d", "6m": "1h", "1y": "1d", "Max": "1d"}
+interval_map = {"1d": "5m", "1w": "15m", "1m": "30m", "3m": "1h", "6m": "1d", "1y": "1d", "Max": "1d"}
 period_map = {"1d": "1d", "1w": "7d", "1m": "1mo", "3m": "3mo", "6m": "6mo", "1y": "1y", "Max": "max"}
 
 interval = interval_map[timeframe]
@@ -117,13 +117,14 @@ try:
                 ]
             )
 
-        if interval != "1d":
-            fig.update_xaxes(
-               rangebreaks=[
-               dict(bounds=["sat", "mon"]),
-               dict(bounds=[17, 9], pattern="hour")
-               ]
-            )
+        if timeframe == "1d":
+           fig.update_xaxes(
+           rangebreaks=[
+           dict(bounds=["sat", "mon"]),
+           dict(bounds=[17, 9], pattern="hour")
+            ]
+           )
+
         else:
              fig.update_xaxes(
              rangebreaks=[
