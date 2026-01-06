@@ -97,18 +97,22 @@ try:
         pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
         pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
 
+        fig.update_xaxes(
+    rangebreaks=[
+        dict(bounds=["sat", "mon"]),   # ta bort helger
+        dict(bounds=[17, 9], pattern="hour")  # ta bort natt (09–17)
+            ]
+        )
+
         fig.update_layout(
             title=f"{ticker} – {timeframe} trend",
             xaxis_title="Datum",
             yaxis_title="Pris",
-            yaxis=[dict(range=[price_min - pad_down, price_max + pad_up], autorange=False, rangemode="normal")
-            
-         fig.update_xaxes(
-             rangebreaks=[
-             dict(bounds=["sat", "mon"]),   # ta bort helger
-             dict(bounds=[17, 9], pattern="hour")  # ta bort natt (09–17)
-             ]
-             )
+            yaxis=dict(
+                range=[price_min - pad_down, price_max + pad_up],
+                autorange=False,
+                rangemode="normal"
+            )
         )
 
         st.plotly_chart(fig, use_container_width=True)
