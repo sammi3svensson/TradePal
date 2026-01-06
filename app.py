@@ -2,62 +2,96 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
+from datetime import datetime, timedelta
 
 st.set_page_config(page_title="TradePal", layout="wide")
+
+# ----- Tickerväljare -----
 st.title("TradePal – Smart signalanalys för svenska aktier")
 
-nasdaq_stocks = ["VOLV-B.ST", "ERIC-B.ST", "SAND.ST", "HM-B.ST", "ATCO-A.ST"]
+# Dummy lista för Nasdaq Stockholm-exempel (byt ut mot full lista)
+nasdaq_stocks = ["VOLV-B.ST", "KINV-B.ST", "SAND.ST", "ERIC-B.ST", "HUSQ-B.ST"]
 
-# Sökfält med autocomplete
-ticker_input = st.text_input("Sök ticker", "")
-suggestions = [t for t in nasdaq_stocks if t.lower().startswith(ticker_input.lower())] if len(ticker_input) >= 2 else []
+# Autocomplete ticker input
+ticker_input = st.text_input("Sök aktie (minst 2 bokstäver):").upper()
+suggestions = [t for t in nasdaq_stocks if ticker_input in t] if len(ticker_input) >= 2 else []
+ticker = st.selectbox("Välj ticker:", suggestions) if suggestions else None
 
-ticker = st.selectbox("Välj ticker", suggestions) if suggestions else ticker_input.upper() if ticker_input else None
+# ----- Välj trendperiod och typ -----
+trend_period = st.selectbox("Välj trendperiod:", ["1d", "1w", "1mo", "3m", "6m", "1y", "Max"])
+chart_type = st.radio("Välj graf:", ["Candlestick", "Linje"])
 
-chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"])
-timeframe = st.selectbox("Välj tidsperiod", ["1d", "3d", "1w", "1m", "3m", "6m", "1y", "Max"])
+# ----- Signaler info -----
+st.markdown("""
+**Signaler (poäng):**  
+- 🟢 Köp Strong / Sälj Strong: 75p  
+- 🟡 Köp Observera / Sälj Observera: 60p  
+- ⚪ Neutral: 0p  
+""")
 
-interval_map = {"1d": "5m", "3d": "15m", "1w": "1h", "1m": "1d", "3m": "1d", "6m": "1d", "1y": "1d", "Max": "1d"}
-period_map = {"1d": "1d", "3d": "3d", "1w": "7d", "1m": "1mo", "3m": "3mo", "6m": "6mo", "1y": "1y", "Max": "max"}
+# ----- Hämta data -----
+def fetch_data(ticker, period):
+    interval_map = {
+        "1d": "5m",
+        "1w": "15m",
+        "1mo": "30m",
+        "3m": "1h",
+        "6m": "1h",
+        "1y": "1d",
+        "Max": "1d"
+    }
+    interval = interval_map[period]
 
-interval = interval_map[timeframe]
-period = period_map[timeframe]
-
-if ticker:
-    if not ticker.endswith(".ST"):
-        ticker += ".ST"
-    
+    # Yahoo intraday/daily fallback
     try:
-        data = yf.Ticker(ticker).history(period=period, interval=interval)
-        if data.empty:
-            st.error(f"Inget data hittades för {ticker} i vald tidsram.")
+        if period in ["3m", "6m"]:
+            # max 60 dagar intraday, äldre dagligt
+            intraday_days = 60
+            df_intraday = yf.download(ticker, period=f"{intraday_days}d", interval=interval)
+            df_intraday.reset_index(inplace=True)
+            # fallback daily data
+            total_days = {"3m": 90, "6m": 180}[period]
+            df_daily = yf.download(ticker, period=f"{total_days}d", interval="1d")
+            df_daily.reset_index(inplace=True)
+            df = pd.concat([df_daily, df_intraday])
+            df.drop_duplicates(subset="Datetime", inplace=True)
         else:
-            # Fix för intraday: använd 'Datetime' om 'Date' saknas
-            if 'Date' in data.columns:
-                data['Date'] = pd.to_datetime(data['Date'])
-            else:
-                data.reset_index(inplace=True)
-                if 'Datetime' in data.columns:
-                    data['Date'] = pd.to_datetime(data['Datetime'])
-            
-            hover_text = [
-                f"{row['Date']}: Open={row['Open']}, High={row['High']}, Low={row['Low']}, Close={row['Close']}"
-                for _, row in data.iterrows()
-            ]
-
-            if chart_type == "Candlestick":
-                fig = go.Figure(data=[go.Candlestick(
-                    x=data['Date'], open=data['Open'], high=data['High'],
-                    low=data['Low'], close=data['Close'], hovertext=hover_text, hoverinfo="text"
-                )])
-            else:
-                fig = go.Figure(data=[go.Scatter(
-                    x=data['Date'], y=data['Close'], mode='lines+markers',
-                    hovertext=hover_text, hoverinfo="text"
-                )])
-
-            fig.update_layout(title=f"{ticker} – {timeframe} trend", xaxis_title="Datum", yaxis_title="Pris")
-            st.plotly_chart(fig, use_container_width=True)
-
+            df = yf.download(ticker, period=period if period != "Max" else "max", interval=interval)
+            df.reset_index(inplace=True)
+        if df.empty:
+            return None
+        return df
     except Exception as e:
         st.error(f"Fel vid hämtning av data: {e}")
+        return None
+
+# ----- Visa graf -----
+if ticker:
+    data = fetch_data(ticker, trend_period)
+    if data is None or data.empty:
+        st.warning(f"Inget data hittades för {ticker} i vald tidsram.")
+    else:
+        if chart_type == "Candlestick":
+            fig = go.Figure(data=[go.Candlestick(
+                x=data['Datetime'] if 'Datetime' in data.columns else data['Date'],
+                open=data['Open'], high=data['High'], low=data['Low'], close=data['Close'],
+                increasing_line_color='green', decreasing_line_color='red',
+                hovertext=[f"Datum: {d}<br>Pris: {c}" for d, c in zip(
+                    data['Datetime'] if 'Datetime' in data.columns else data['Date'], data['Close']
+                )],
+                hoverinfo='text'
+            )])
+        else:  # Linje
+            fig = go.Figure(data=[go.Scatter(
+                x=data['Datetime'] if 'Datetime' in data.columns else data['Date'],
+                y=data['Close'], mode='lines',
+                hovertext=[f"Datum: {d}<br>Pris: {c}" for d, c in zip(
+                    data['Datetime'] if 'Datetime' in data.columns else data['Date'], data['Close']
+                )],
+                hoverinfo='text'
+            )])
+
+        fig.update_layout(title=f"{ticker} – {trend_period} trend",
+                          xaxis_title="Tid", yaxis_title="Pris (SEK)",
+                          xaxis_rangeslider_visible=False)
+        st.plotly_chart(fig, use_container_width=True)
