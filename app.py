@@ -96,6 +96,12 @@ try:
                     dict(bounds=["sat", "mon"])  # Hoppa över lör-sön
                 ]
             )
+        # För 1w, 1m, 3m: stretcha x-axeln så candlesticksen blir tydligare
+        if timeframe in ["1w", "1m", "3m"]:
+            fig.update_xaxes(
+                tickmode="auto",
+                    nticks=20  # Justera antalet ticks på x-axeln
+            )
 
         # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
         price_min = data['Low'].min()
