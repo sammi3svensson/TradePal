@@ -1,100 +1,115 @@
 # app.py
 import streamlit as st
-import yfinance as yf
 import pandas as pd
+import yfinance as yf
 import plotly.graph_objects as go
+from datetime import datetime, timedelta
 
 st.set_page_config(page_title="TradePal", layout="wide")
+
 st.title("TradePal – Smart signalanalys för svenska aktier")
 
-# --- Hämta hela Nasdaq Stockholm-listan ---
-@st.cache_data
-def get_nasdaq_stockholm_tickers():
-    # Yfinance har ingen direkt metod, vi använder en statisk lista som exempel
-    # Byt ut eller uppdatera listan från en källa om du vill ha aktuell
-    return ["VOLV-B.ST","SAN.ST","ERIC-B.ST","HM-B.ST","SEB-A.ST","SKF-B.ST","SAND.ST","SSAB-A.ST","TELIA.ST","SWED-A.ST"]
+# --- NASDAQ Stockholm tickers ---
+nasdaq_stocks = [
+    "VOLV-B", "ERIC-B", "SAND", "HM-B", "ATCO-A", "ATCO-B", "TELIA", "SKF-B", "ASSA-B",
+    # Lägg till fler tickers här
+]
 
-all_tickers = get_nasdaq_stockholm_tickers()
+# --- Autocomplete sökfält ---
+ticker_input = st.text_input(
+    "Sök aktie (minst 2 bokstäver):",
+    ""
+)
 
-# --- Autocomplete ticker ---
-ticker_input = st.text_input("Sök aktie (minst 2 bokstäver för förslag)")
-suggestions = [t for t in all_tickers if t.upper().startswith(ticker_input.upper())] if len(ticker_input) >= 2 else []
-selected_ticker = st.selectbox("Välj aktie", suggestions) if suggestions else None
+suggestions = []
+if len(ticker_input) >= 2:
+    suggestions = [t for t in nasdaq_stocks if t.upper().startswith(ticker_input.upper())]
 
-# --- Trendintervall ---
-interval_options = {
+selected_ticker = None
+if suggestions:
+    selected_ticker = st.selectbox("Välj aktie från förslag:", suggestions)
+
+# --- Lägg till .ST automatiskt ---
+if selected_ticker and not selected_ticker.endswith(".ST"):
+    selected_ticker += ".ST"
+
+# --- Tidsintervall ---
+timeframe_map = {
     "1d": "5m",
     "1w": "15m",
     "1mo": "30m",
-    "3mo": "30m",
-    "6mo": "1h",
+    "3m": "30m",
+    "6m": "1h",
     "1y": "1d",
     "Max": "1d"
 }
-selected_period = st.selectbox("Välj trendperiod", list(interval_options.keys()))
-selected_interval = interval_options[selected_period]
 
-# --- Candlestick eller linje ---
-chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"])
+timeframe_options = list(timeframe_map.keys())
+selected_timeframe = st.selectbox("Välj trendperiod:", timeframe_options)
+interval = timeframe_map[selected_timeframe]
 
+# --- Hämta data ---
+data = None
 if selected_ticker:
-    # Lägg till .ST om det inte finns
-    if not selected_ticker.upper().endswith(".ST"):
-        selected_ticker = selected_ticker.upper() + ".ST"
-
     try:
-        # Hämta data
-        if selected_interval.endswith("m") or selected_interval.endswith("h"):
-            data = yf.download(selected_ticker, period="60d", interval=selected_interval)
-        else:
-            data = yf.download(selected_ticker, period=selected_period, interval=selected_interval)
-
-        if data.empty:
-            st.error(f"Inget data hittades för {selected_ticker} i vald tidsram")
-        else:
-            data.reset_index(inplace=True)
-
-            # Kolumnhantering
-            if "Datetime" in data.columns:
-                x_col = "Datetime"
-            elif "Date" in data.columns:
-                x_col = "Date"
-            else:
-                x_col = data.columns[0]
-
-            # --- Plotta ---
-            fig = go.Figure()
-            hover_text = [f"Datum: {str(dt.date())}\nTid: {str(dt.time()) if hasattr(dt, 'time') else ''}\nPris: {c}" for dt, c in zip(data[x_col], data['Close'])]
-
-            if chart_type == "Candlestick":
-                fig.add_trace(go.Candlestick(
-                    x=data[x_col],
-                    open=data['Open'],
-                    high=data['High'],
-                    low=data['Low'],
-                    close=data['Close'],
-                    increasing_line_color='green',
-                    decreasing_line_color='red',
-                    hovertext=hover_text,
-                    hoverinfo="text"
-                ))
-            else:
-                fig.add_trace(go.Scatter(
-                    x=data[x_col],
-                    y=data['Close'],
-                    mode='lines+markers',
-                    hovertext=hover_text,
-                    hoverinfo="text"
-                ))
-
-            fig.update_layout(
-                xaxis_title="Tid",
-                yaxis_title="Pris",
-                hovermode="x unified",
-                template="plotly_dark"
+        if interval in ["1d","5m","15m","30m","60m","1h"]:
+            # Intraday
+            data = yf.download(
+                tickers=selected_ticker,
+                period="60d",
+                interval=interval,
+                progress=False
             )
-
-            st.plotly_chart(fig, use_container_width=True)
-
+        else:
+            data = yf.download(
+                tickers=selected_ticker,
+                period="max",
+                interval="1d",
+                progress=False
+            )
+        data.reset_index(inplace=True)
     except Exception as e:
         st.error(f"Fel vid hämtning av data: {e}")
+
+# --- Plotta graf ---
+if data is not None and not data.empty:
+    fig = go.Figure()
+
+    # Candlestick
+    fig.add_trace(go.Candlestick(
+        x=data['Datetime'] if 'Datetime' in data.columns else data['Date'],
+        open=data['Open'],
+        high=data['High'],
+        low=data['Low'],
+        close=data['Close'],
+        name="Candlestick"
+    ))
+
+    # Linje för stängningspris
+    fig.add_trace(go.Scatter(
+        x=data['Datetime'] if 'Datetime' in data.columns else data['Date'],
+        y=data['Close'],
+        mode='lines',
+        name='Stängningspris'
+    ))
+
+    # Tooltip-format
+    fig.update_traces(
+        hovertemplate=
+        "<b>%{x}</b><br>" +
+        "Open: %{open}<br>" +
+        "High: %{high}<br>" +
+        "Low: %{low}<br>" +
+        "Close: %{close}<br><extra></extra>"
+    )
+
+    fig.update_layout(
+        xaxis_rangeslider_visible=False,
+        title=f"{selected_ticker} - {selected_timeframe} trend",
+        template="plotly_dark"
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    if selected_ticker:
+        st.warning(f"Inget data hittades för {selected_ticker} i vald tidsram")
