@@ -112,9 +112,10 @@ try:
                 hoverinfo="text"
             )])
 
-        price_min = data['Low'].min()
+ # --- Y-axel padding (ENDAST DETTA) ---
+price_min = data['Low'].min()
 price_max = data['High'].max()
-padding = (price_max - price_min) * 0.05  # 5% luft
+padding = (price_max - price_min) * 0.05
 
 fig.update_layout(
     title=f"{ticker} – {timeframe} trend",
@@ -123,8 +124,7 @@ fig.update_layout(
     yaxis=dict(range=[price_min - padding, price_max + padding])
 )
 
-
-        st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, use_container_width=True)
 
 except Exception as e:
     st.error(f"Fel vid hämtning av data: {e}")
