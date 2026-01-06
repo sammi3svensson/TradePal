@@ -91,8 +91,8 @@ try:
         padding = max((price_max - price_min) * 0.15, price_max * 0.005)
 
         # Skapa figuren (candlestick eller linje)
-if chart_type == "Candlestick":
-    fig = go.Figure(data=[go.Candlestick(
+     if chart_type == "Candlestick":
+        fig = go.Figure(data=[go.Candlestick(
         x=data['Date'],
         open=data['Open'],
         high=data['High'],
@@ -100,46 +100,46 @@ if chart_type == "Candlestick":
         close=data['Close'],
         hovertext=hover_text,
         hoverinfo="text"
-    )])
-else:
-    fig = go.Figure(data=[go.Scatter(
+        )])
+   else:
+        fig = go.Figure(data=[go.Scatter(
         x=data['Date'],
         y=data['Close'],
         mode="lines+markers",
         hovertext=hover_text,
         hoverinfo="text"
-    )])
+        )])
 
-# Ta bort helger / natt
-if interval != "1d":
-    fig.update_xaxes(
+        # Ta bort helger / natt
+     if interval != "1d":
+        fig.update_xaxes(
         rangebreaks=[
-            dict(bounds=["sat", "mon"]),
-            dict(bounds=[17, 9], pattern="hour")
-        ]
-    )
-else:
-    fig.update_xaxes(
-        rangebreaks=[
-            dict(bounds=["sat", "mon"])
-        ]
-    )
+        dict(bounds=["sat", "mon"]),
+        dict(bounds=[17, 9], pattern="hour")
+          ]
+         )
+    else:
+         fig.update_xaxes(
+         rangebreaks=[
+         dict(bounds=["sat", "mon"])
+           ]
+          )
 
-# Y-axel padding (OBS: INTE indenterad!)
-price_min = data['Low'].min()
-price_max = data['High'].max()
-padding = max((price_max - price_min) * 0.15, price_max * 0.005)
+          # Y-axel padding (OBS: INTE indenterad!)
+          price_min = data['Low'].min()
+          price_max = data['High'].max()
+          padding = max((price_max - price_min) * 0.15, price_max * 0.005)
 
-fig.update_yaxes(range=[price_min - padding, price_max + padding])
+          fig.update_yaxes(range=[price_min - padding, price_max + padding])
 
-# Layout
-fig.update_layout(
-    title=f"{ticker} – {timeframe} trend",
-    xaxis_title="Datum",
-    yaxis_title="Pris"
-)
+          # Layout
+          fig.update_layout(
+          title=f"{ticker} – {timeframe} trend",
+          xaxis_title="Datum",
+          yaxis_title="Pris"
+           )
 
-st.plotly_chart(fig, use_container_width=True)
+          st.plotly_chart(fig, use_container_width=True)
 
 
 except Exception as e:
