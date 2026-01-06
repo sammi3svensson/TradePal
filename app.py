@@ -106,6 +106,12 @@ try:
                 autorange=False,
                 rangemode="normal"
             )
+         fig.update_xaxes(
+             rangebreaks=[
+             dict(bounds=["sat", "mon"]),   # ta bort helger
+             dict(bounds=[17, 9], pattern="hour")  # ta bort natt (09–17)
+             ]
+             )
         )
 
         st.plotly_chart(fig, use_container_width=True)
