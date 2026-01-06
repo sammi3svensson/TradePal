@@ -76,33 +76,39 @@ try:
         )
 
         if chart_type == "Candlestick":
-    fig = go.Figure(data=[go.Candlestick(
-        x=data['Date'],
-        open=data['Open'],
-        high=data['High'],
-        low=data['Low'],
-        close=data['Close'],
-        hovertext=hover_text,
-        hoverinfo="text"
-    )])
+            fig = go.Figure(
+            data=[
+            go.Candlestick(
+                x=data['Date'],
+                open=data['Open'],
+                high=data['High'],
+                low=data['Low'],
+                close=data['Close'],
+                hovertext=hover_text,
+                hoverinfo="text"
+            )
+        ]
+    )
 else:
-    fig = go.Figure(data=[go.Scatter(
-        x=data['Date'],
-        y=data['Close'],
-        mode='lines+markers',
-        hovertext=hover_text,
-        hoverinfo="text"
-    )])
+    fig = go.Figure(
+        data=[
+            go.Scatter(
+                x=data['Date'],
+                y=data['Close'],
+                mode="lines+markers",
+                hovertext=hover_text,
+                hoverinfo="text"
+            )
+        ]
+    )
 
-# 🔹 TA BORT HELGER + NATT (DETTA VAR DET DU FRÅGADE EFTER)
 fig.update_xaxes(
     rangebreaks=[
-        dict(bounds=["sat", "mon"]),          # helger
-        dict(bounds=[17, 9], pattern="hour")  # natt (09–17)
+        dict(bounds=["sat", "mon"]),
+        dict(bounds=[17, 9], pattern="hour")
     ]
 )
 
-# 🔹 Y-AXEL MED LUFT (som du redan fixat)
 fig.update_yaxes(range=[price_min - padding, price_max + padding])
 
 fig.update_layout(
