@@ -3,46 +3,48 @@ import pandas as pd
 import yfinance as yf
 import plotly.graph_objects as go
 
-st.set_page_config(
-    page_title="TradePal – Smart signalanalys för svenska aktier",
-    layout="wide"
-)
-
-st.title("📈 TradePal – Smart signalanalys för svenska aktier")
+st.set_page_config(page_title="TradePal", layout="wide")
+st.title("📈 TradePal – Svenska aktier")
 
 # -------------------------------------------------
-# 1. Ladda HELA Nasdaq Stockholm automatiskt
+# 1. Manuell, verifierad Nasdaq Stockholm-lista
+# (Yahoo-kompatibel)
 # -------------------------------------------------
 
 @st.cache_data
-def load_nasdaq_stockholm():
-    url = "https://raw.githubusercontent.com/datasets/nasdaq-listings/master/data/nasdaq-listed-symbols.csv"
-    df = pd.read_csv(url)
+def load_swedish_tickers():
+    data = {
+        "VOLV-B": "Volvo B",
+        "ATCO-A": "Atlas Copco A",
+        "ATCO-B": "Atlas Copco B",
+        "ERIC-B": "Ericsson B",
+        "HM-B": "H&M B",
+        "SEB-A": "SEB A",
+        "SWED-A": "Swedbank A",
+        "SHB-A": "Handelsbanken A",
+        "KINV-B": "Kinnevik B",
+        "INVE-B": "Investor B",
+        "SAND": "Sandvik",
+        "SKF-B": "SKF B"
+    }
+    return pd.DataFrame.from_dict(data, orient="index", columns=["Namn"])
 
-    # Filtrera svenska aktier (.ST)
-    df = df[df["Symbol"].str.endswith(".ST")]
-
-    # Skapa visningsnamn utan .ST
-    df["CleanSymbol"] = df["Symbol"].str.replace(".ST", "", regex=False)
-
-    return df.sort_values("CleanSymbol")
-
-nasdaq_df = load_nasdaq_stockholm()
+tickers_df = load_swedish_tickers()
 
 # -------------------------------------------------
-# 2. Sökbar ticker-väljare (utan .ST)
+# 2. Sökbar dropdown (UTAN .ST)
 # -------------------------------------------------
 
-ticker_display = st.selectbox(
-    "🔎 Sök svensk aktie (skriv t.ex. VO, KINV, ATCO)",
-    options=nasdaq_df["CleanSymbol"].tolist()
+ticker_clean = st.selectbox(
+    "🔎 Sök svensk aktie",
+    options=tickers_df.index.tolist(),
+    format_func=lambda x: f"{x} – {tickers_df.loc[x, 'Namn']}"
 )
 
-# Lägg till .ST internt (osynligt för användaren)
-ticker = ticker_display + ".ST"
+ticker = ticker_clean + ".ST"
 
 # -------------------------------------------------
-# 3. Tidsintervall
+# 3. Tidsperiod
 # -------------------------------------------------
 
 period = st.selectbox(
@@ -52,23 +54,22 @@ period = st.selectbox(
 )
 
 # -------------------------------------------------
-# 4. Hämta data från Yahoo Finance
+# 4. Hämta Yahoo-data
 # -------------------------------------------------
 
 @st.cache_data
-def load_price_data(ticker, period):
-    df = yf.download(
+def load_data(ticker, period):
+    return yf.download(
         ticker,
         period=period,
         auto_adjust=True,
         progress=False
     )
-    return df
 
-df = load_price_data(ticker, period)
+df = load_data(ticker, period)
 
 if df.empty:
-    st.error(f"Ingen data hittades för {ticker_display}")
+    st.error(f"Ingen data hittades för {ticker_clean}")
     st.stop()
 
 # -------------------------------------------------
@@ -87,33 +88,9 @@ fig.add_trace(go.Candlestick(
 ))
 
 fig.update_layout(
-    title=f"{ticker_display} – Kursutveckling",
-    xaxis_title="Datum",
-    yaxis_title="Pris (SEK)",
     template="plotly_dark",
-    height=600
+    height=600,
+    title=f"{ticker_clean} – Kursutveckling"
 )
 
 st.plotly_chart(fig, use_container_width=True)
-
-# -------------------------------------------------
-# 6. Info-box (placeholder för signaler)
-# -------------------------------------------------
-
-st.info(
-    """
-**TradePal – Signalinfo (kommer i nästa steg)**
-
-🟢 **Köp (Strong)**  
-🔴 **Sälj (Strong)**  
-
-Signaler kommer väga samman:
-- RSI
-- ADX
-- Volym
-- Trendstruktur
-- Mean Reversion
-
-Poängskala: **0–100**
-"""
-)
