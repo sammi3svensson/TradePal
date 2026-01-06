@@ -89,10 +89,14 @@ try:
                 mode='lines'
             )])
 
-        # --- NY FIX: Hoppa över helger för 1w, 1m, 3m utan category ---
+        # --- NY FIX: Använd kategori för 1w, 1m, 3m för bredare candlesticks ---
         if timeframe in ["1w", "1m", "3m"]:
             fig.update_xaxes(
-                rangebreaks=[dict(bounds=["sat", "mon"])]
+                type="category",
+                rangebreaks=[dict(bounds=["sat", "mon"])],  # Hoppa över helger
+                tickmode="auto",
+                nticks=10,        # Max antal ticklabels
+                tickangle=-45     # Lutade labels för bättre läsbarhet
             )
 
         # --- Öka höjden på trendfönstret ---
