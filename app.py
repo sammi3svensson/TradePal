@@ -92,16 +92,23 @@ try:
                 mode='lines'
             )])
 
-        # --- FIX: Ticklabels på 1w, 1m, 3m utan mikrosekunder ---
+        # --- FIX: 1w, 1m, 3m → snygga ticklabels utan mikrosekunder ---
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
-                fig.update_xaxes(
-                    tickformat="%d-%m"  # dag-månad
-                )
+                # Visa dag-månad för 1w och 1m
+                tick_labels = data['Date'].dt.strftime('%d-%m')
             else:  # 3m
-                fig.update_xaxes(
-                    tickformat="%H:%M"  # timme:minut
-                )
+                # Visa timme:minut för 3m
+                tick_labels = data['Date'].dt.strftime('%H:%M')
+
+            fig.update_xaxes(
+                type="category",
+                categoryorder="category ascending",
+                tickvals=data['Date'],
+                ticktext=tick_labels,
+                tickmode="auto",
+                nticks=10
+            )
 
         # --- Öka höjden på trendfönstret ---
         fig.update_layout(
