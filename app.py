@@ -99,7 +99,8 @@ try:
         # ✅ Y-AXEL FIX – MÅSTE LIGGA HÄR
         price_min = data['Low'].min()
         price_max = data['High'].max()
-        padding = (price_max - price_min) * 0.05
+        padding = max((price_max - price_min) * 0.15, price_max * 0.005)
+
 
         fig.update_layout(
     title=f"{ticker} – {timeframe} trend",
