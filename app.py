@@ -102,11 +102,15 @@ try:
         padding = (price_max - price_min) * 0.05
 
         fig.update_layout(
-            title=f"{ticker} – {timeframe} trend",
-            xaxis_title="Datum",
-            yaxis_title="Pris",
-            yaxis=dict(range=[price_min - padding, price_max + padding])
-        )
+    title=f"{ticker} – {timeframe} trend",
+    xaxis_title="Datum",
+    yaxis_title="Pris",
+    yaxis=dict(
+        range=[price_min - padding, price_max + padding],
+        autorange=False
+    )
+)
+
 
         st.plotly_chart(fig, use_container_width=True)
 
