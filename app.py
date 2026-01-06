@@ -19,6 +19,7 @@ nasdaq_stocks = [
     "SAND.ST", "VEONE.ST", "SBB.ST", "BHG.ST", "BONI-B.ST",
     "SOBI.ST", "TEL2-B.ST", "TREL.ST", "VOLATI.ST", "WALL-B.ST"
 ]
+
 # --- Autocomplete sökfält ---
 ticker_input = st.text_input("Sök ticker", "")
 
