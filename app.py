@@ -120,4 +120,11 @@ try:
         # Layout
         fig.update_layout(
             title=f"{ticker} – {timeframe} trend",
-            xaxis_title="_
+            xaxis_title="Datum",
+            yaxis_title="Pris"
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+except Exception as e:
+    st.error(f"Fel vid hämtning av data: {e}")
