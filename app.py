@@ -101,7 +101,7 @@ try:
         hovertext=hover_text,
         hoverinfo="text"
         )])
-   else:
+     else:
         fig = go.Figure(data=[go.Scatter(
         x=data['Date'],
         y=data['Close'],
@@ -118,7 +118,7 @@ try:
         dict(bounds=[17, 9], pattern="hour")
           ]
          )
-    else:
+     else:
          fig.update_xaxes(
          rangebreaks=[
          dict(bounds=["sat", "mon"])
