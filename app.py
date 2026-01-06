@@ -63,74 +63,51 @@ period_map = {"1d": "1d", "1w": "7d", "1m": "1mo", "3m": "3mo", "6m": "6mo", "1y
 interval = interval_map[timeframe]
 period = period_map[timeframe]
 
-# --- Hämta och visa data ---
 try:
     data = yf.Ticker(ticker).history(period=period, interval=interval)
 
     if data.empty:
         st.error(f"Inget data hittades för {ticker} i vald tidsram.")
     else:
-        # --- ENDRA BARA HÄR: säkerställ att 'Date' finns ---
-        data = data.reset_index()  # Flytta index till kolumn Date
-        if 'Date' not in data.columns:  # extra säkerhet
-            data['Date'] = data.index
+        data.reset_index(inplace=True)
+        data['Date'] = pd.to_datetime(
+            data['Datetime'] if 'Datetime' in data.columns else data['Date']
+        )
 
-        # Skapa hover-text
-        hover_text = [
-            f"Datum: {row['Date'].strftime('%Y-%m-%d %H:%M')}<br>Open: {row['Open']}<br>High: {row['High']}<br>Low: {row['Low']}<br>Close: {row['Close']}"
-            for _, row in data.iterrows()
-        ]
+        if chart_type == "Candlestick":
+            fig = go.Figure(data=[go.Candlestick(
+                x=data['Date'],
+                open=data['Open'],
+                high=data['High'],
+                low=data['Low'],
+                close=data['Close']
+            )])
+        else:
+            fig = go.Figure(data=[go.Scatter(
+                x=data['Date'],
+                y=data['Close'],
+                mode='lines'
+            )])
 
-       # Skapa figuren (candlestick eller linje)
-if chart_type == "Candlestick":
-    fig = go.Figure(data=[go.Candlestick(
-        x=data['Date'],
-        open=data['Open'],
-        high=data['High'],
-        low=data['Low'],
-        close=data['Close'],
-        hovertext=hover_text,
-        hoverinfo="text"
-    )])
-else:
-    fig = go.Figure(data=[go.Scatter(
-        x=data['Date'],
-        y=data['Close'],
-        mode="lines+markers",
-        hovertext=hover_text,
-        hoverinfo="text"
-    )])
+        # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
+        price_min = data['Low'].min()
+        price_max = data['High'].max()
 
-# Ta bort helger / natt
-if interval != "1d":
-    fig.update_xaxes(
-        rangebreaks=[
-            dict(bounds=["sat", "mon"]),
-            dict(bounds=[17, 9], pattern="hour")
-        ]
-    )
-else:
-    fig.update_xaxes(
-        rangebreaks=[
-            dict(bounds=["sat", "mon"])
-        ]
-    )
+        pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
+        pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
 
-# Y-axel padding (OBS: INTE indenterad!)
-price_min = data['Low'].min()
-price_max = data['High'].max()
-padding = max((price_max - price_min) * 0.15, price_max * 0.005)
+        fig.update_layout(
+            title=f"{ticker} – {timeframe} trend",
+            xaxis_title="Datum",
+            yaxis_title="Pris",
+            yaxis=dict(
+                range=[price_min - pad_down, price_max + pad_up],
+                autorange=False,
+                rangemode="normal"
+            )
+        )
 
-fig.update_yaxes(range=[price_min - padding, price_max + padding])
-
-# Layout
-fig.update_layout(
-    title=f"{ticker} – {timeframe} trend",
-    xaxis_title="Datum",
-    yaxis_title="Pris"
-)
-
-st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
 
 except Exception as e:
     st.error(f"Fel vid hämtning av data: {e}")
