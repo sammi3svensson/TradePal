@@ -54,10 +54,13 @@ if ticker:
             if 'Date' not in data.columns and 'Datetime' in data.columns:
                 data['Date'] = pd.to_datetime(data['Datetime'])
             
-            # Tooltip med datum, tid och pris
+            # Tooltip med datum, tid och pris på separata rader
             hover_text = [
-                f"{row['Date'].strftime('%Y-%m-%d %H:%M:%S')}<br>"
-                f"Open={row['Open']}, High={row['High']}, Low={row['Low']}, Close={row['Close']}"
+                f"Datum & tid: {row['Date'].strftime('%Y-%m-%d %H:%M:%S')}<br>"
+                f"Open: {row['Open']}<br>"
+                f"High: {row['High']}<br>"
+                f"Low: {row['Low']}<br>"
+                f"Close: {row['Close']}"
                 for _, row in data.iterrows()
             ]
 
