@@ -70,7 +70,14 @@ try:
     if data.empty:
         st.error(f"Inget data hittades för {ticker} i vald tidsram.")
     else:
-        # --- HÄR BÖRJAR DIN FIGURKOD ---
+        # Lägg till Date-kolumn så koden fungerar utan att ändra resten
+        data = data.reset_index()  # Nu finns data['Date']
+
+        # Skapa hover-text (samma som tidigare om du hade hover_text)
+        hover_text = [
+            f"Datum: {row['Date'].strftime('%Y-%m-%d %H:%M')}<br>Open: {row['Open']}<br>High: {row['High']}<br>Low: {row['Low']}<br>Close: {row['Close']}"
+            for _, row in data.iterrows()
+        ]
 
         # Skapa figuren (candlestick eller linje)
         if chart_type == "Candlestick":
@@ -119,4 +126,3 @@ try:
 
 except Exception as e:
     st.error(f"Fel vid hämtning av data: {e}")
-
