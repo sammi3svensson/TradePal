@@ -70,10 +70,12 @@ try:
     if data.empty:
         st.error(f"Inget data hittades för {ticker} i vald tidsram.")
     else:
-        # Lägg till Date-kolumn så koden fungerar utan att ändra resten
-        data = data.reset_index()  # Nu finns data['Date']
+        # --- ENDRA BARA HÄR: säkerställ att 'Date' finns ---
+        data = data.reset_index()  # Flytta index till kolumn Date
+        if 'Date' not in data.columns:  # extra säkerhet
+            data['Date'] = data.index
 
-        # Skapa hover-text (samma som tidigare om du hade hover_text)
+        # Skapa hover-text
         hover_text = [
             f"Datum: {row['Date'].strftime('%Y-%m-%d %H:%M')}<br>Open: {row['Open']}<br>High: {row['High']}<br>Low: {row['Low']}<br>Close: {row['Close']}"
             for _, row in data.iterrows()
@@ -118,11 +120,4 @@ try:
         # Layout
         fig.update_layout(
             title=f"{ticker} – {timeframe} trend",
-            xaxis_title="Datum",
-            yaxis_title="Pris"
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
-
-except Exception as e:
-    st.error(f"Fel vid hämtning av data: {e}")
+            xaxis_title="_
