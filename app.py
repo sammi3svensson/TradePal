@@ -3,7 +3,46 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 
+# --- SIDINSTÄLLNINGAR ---
 st.set_page_config(page_title="TradePal", layout="wide")
+
+# --- MODERN STIL: Bakgrund & CSS ---
+st.markdown("""
+<style>
+    /* Gradient bakgrund */
+    .stApp {
+        background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+        color: #ffffff;
+    }
+
+    /* Titeln */
+    h1 {
+        color: #00bfff;
+        font-family: 'Arial Black', sans-serif;
+    }
+
+    /* Knappar */
+    div.stButton > button {
+        background: linear-gradient(90deg, #00bfff, #1e90ff);
+        color: white;
+        font-weight: bold;
+        border-radius: 10px;
+        padding: 0.5em 1.5em;
+        transition: transform 0.2s;
+    }
+    div.stButton > button:hover {
+        transform: scale(1.05);
+        background: linear-gradient(90deg, #1e90ff, #00bfff);
+    }
+
+    /* Expander scroll */
+    .streamlit-expanderHeader {
+        color: #00bfff !important;
+        font-weight: bold;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 st.title("TradePal – Smart signalanalys för svenska aktier")
 
 # --- Svenska Nasdaq aktier med företagsnamn ---
@@ -32,14 +71,12 @@ nasdaq_stocks = {
 # --- Sökfält ---
 ticker_input = st.text_input("Sök ticker", "")
 
-# Om användaren inte skrivit in nåt men klickat på knapp lagras tickern här
 if "selected_ticker" not in st.session_state:
     st.session_state.selected_ticker = ""
 
 # --- Lista med bolag som knappar i expander (scrollbar) ---
 with st.expander("Stockholmsbörsen", expanded=False):
-    st.markdown(
-        """
+    st.markdown("""
         <div style="max-height: 300px; overflow-y: auto; width: fit-content;">
     """, unsafe_allow_html=True)
     for name, symbol in nasdaq_stocks.items():
@@ -48,7 +85,7 @@ with st.expander("Stockholmsbörsen", expanded=False):
             ticker_input = symbol.replace(".ST", "")
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Bestäm vilken ticker som ska användas
+# --- Bestäm ticker ---
 ticker = st.session_state.selected_ticker if st.session_state.selected_ticker else ticker_input.upper()
 if ticker and not ticker.endswith(".ST"):
     ticker += ".ST"
@@ -74,6 +111,7 @@ try:
             data['Datetime'] if 'Datetime' in data.columns else data['Date']
         )
 
+        # --- GRAF ---
         if chart_type == "Candlestick":
             fig = go.Figure(data=[go.Candlestick(
                 x=data['Date'],
@@ -81,24 +119,31 @@ try:
                 high=data['High'],
                 low=data['Low'],
                 close=data['Close'],
-                increasing_line_color='green',
-                decreasing_line_color='red',
-                whiskerwidth=0.2
+                increasing_line_color='rgba(0,191,255,0.8)',
+                decreasing_line_color='rgba(255,99,71,0.8)',
+                whiskerwidth=0.2,
+                hovertemplate=
+                    "<b>%{x|%d-%m %H:%M}</b><br>" +
+                    "Open: %{open:.2f} SEK<br>" +
+                    "High: %{high:.2f} SEK<br>" +
+                    "Low: %{low:.2f} SEK<br>" +
+                    "Close: %{close:.2f} SEK<br><extra></extra>"
             )])
         else:
             fig = go.Figure(data=[go.Scatter(
                 x=data['Date'],
                 y=data['Close'],
-                mode='lines'
+                mode='lines+markers',
+                line=dict(color='rgba(0,191,255,0.9)', width=2),
+                marker=dict(size=4),
+                hovertemplate="<b>%{x|%d-%m %H:%M}</b><br>Pris: %{y:.2f} SEK<extra></extra>"
             )])
 
-        # --- FIX: 1w, 1m, 3m → snygga ticklabels utan mikrosekunder ---
+        # --- FIX: 1w, 1m, 3m → snygga ticklabels ---
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
-                # Visa dag-månad för 1w och 1m
                 tick_labels = data['Date'].dt.strftime('%d-%m')
             else:  # 3m
-                # Visa timme:minut för 3m
                 tick_labels = data['Date'].dt.strftime('%H:%M')
 
             fig.update_xaxes(
@@ -110,10 +155,8 @@ try:
                 nticks=10
             )
 
-        # --- Öka höjden på trendfönstret ---
-        fig.update_layout(
-            height=700
-        )
+        # --- Öka höjd på trendfönster ---
+        fig.update_layout(height=700)
 
         # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
         price_min = data['Low'].min()
@@ -130,7 +173,10 @@ try:
                 range=[price_min - pad_down, price_max + pad_up],
                 autorange=False,
                 rangemode="normal"
-            )
+            ),
+            plot_bgcolor='rgba(20,20,30,0.9)',  # mörk bakgrund i plot
+            paper_bgcolor='rgba(20,20,30,0.9)',
+            font=dict(color='white')
         )
 
         st.plotly_chart(fig, use_container_width=True)
