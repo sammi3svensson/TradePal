@@ -62,14 +62,15 @@ st.markdown(
     """
     <style>
     /* Transparent sökfält med vit text och subtil kant */
-    div[data-testid="stTextInput"] input {
-        background-color: rgba(0,0,0,0);  /* transparent */
-        color: white;                     /* textfärg */
-        border: 1px solid rgba(255,255,255,0.5); /* ljus kant */
+    input[type="text"] {
+        background-color: rgba(0,0,0,0) !important;  /* gör input transparent */
+        color: white !important;                     /* texten blir vit */
+        border: 1px solid rgba(255,255,255,0.5) !important; /* subtil kant */
     }
 
-    div[data-testid="stTextInput"] label {
-        color: white; /* label text */
+    /* Label/text över input */
+    label[data-baseweb="label"] {
+        color: white !important;
     }
     </style>
     """,
