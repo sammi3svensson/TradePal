@@ -3,72 +3,15 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 
-# --- SIDINSTÄLLNINGAR ---
-st.set_page_config(page_title="TradePal", layout="wide", page_icon=":chart_with_upwards_trend:")
+st.set_page_config(page_title="TradePal", layout="wide")
 
-# --- CSS FÖR MODERN DESIGN ---
-st.markdown(
-    """
-    <style>
-    /* Body & bakgrund */
-    .stApp {
-        background: linear-gradient(160deg, #f3f0ff 0%, #ffffff 100%);
-        color: #1e1e2f;
-        font-family: 'Segoe UI', 'Roboto', sans-serif;
-    }
-    /* Header logga */
-    .header-logo {
-        display: flex;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    .header-logo img {
-        width: 100px;  /* mindre logga */
-        height: auto;
-    }
-    /* Inputs, selectbox, radiobuttons */
-    .stTextInput>div>div>input, .stSelectbox>div>div>div>div {
-        background-color: rgba(255,255,255,0.9);
-        color: #1e1e2f;
-        font-weight: 600;
-        border-radius: 8px;
-        padding: 6px 10px;
-    }
-    .stRadio>div>div>label {
-        font-weight: 600;
-        color: #1e1e2f;
-    }
-    /* Buttons */
-    button {
-        background-color: #7e6ca0;
-        color: white;
-        border-radius: 8px;
-        padding: 5px 12px;
-        border: none;
-        font-weight: 600;
-    }
-    button:hover {
-        background-color: #9a81c2;
-    }
-    /* Expander scrollbar */
-    div[aria-expanded="false"] > .streamlit-expanderHeader {
-        font-weight: 600;
-        color: #1e1e2f;
-    }
-    /* Trend graf bakgrund */
-    .stPlotlyChart {
-        background-color: rgba(255,255,255,0.0);
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# --- HEADER MED ENDAST LOGGA ---
+# --- Header med logga ---
 st.markdown(
     """
     <div class="header-logo">
-        <img src="https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png" alt="TradePal Logo">
+        <img src="https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png" 
+             alt="TradePal Logo" 
+             style="width: 200px; height: auto; display: block; margin-left: auto; margin-right: auto;">
     </div>
     """,
     unsafe_allow_html=True
@@ -100,17 +43,23 @@ nasdaq_stocks = {
 # --- Sökfält ---
 ticker_input = st.text_input("Sök ticker", "")
 
+# Om användaren inte skrivit in nåt men klickat på knapp lagras tickern här
 if "selected_ticker" not in st.session_state:
     st.session_state.selected_ticker = ""
 
+# --- Lista med bolag som knappar i expander (scrollbar) ---
 with st.expander("Stockholmsbörsen", expanded=False):
-    st.markdown('<div style="max-height: 300px; overflow-y: auto; width: fit-content;">', unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div style="max-height: 300px; overflow-y: auto; width: fit-content;">
+    """, unsafe_allow_html=True)
     for name, symbol in nasdaq_stocks.items():
         if st.button(f"{name} – {symbol.replace('.ST','')}"):
             st.session_state.selected_ticker = symbol
             ticker_input = symbol.replace(".ST", "")
     st.markdown("</div>", unsafe_allow_html=True)
 
+# Bestäm vilken ticker som ska användas
 ticker = st.session_state.selected_ticker if st.session_state.selected_ticker else ticker_input.upper()
 if ticker and not ticker.endswith(".ST"):
     ticker += ".ST"
@@ -157,8 +106,10 @@ try:
         # --- FIX: 1w, 1m, 3m → snygga ticklabels utan mikrosekunder ---
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
+                # Visa dag-månad för 1w och 1m
                 tick_labels = data['Date'].dt.strftime('%d-%m')
-            else:
+            else:  # 3m
+                # Visa timme:minut för 3m
                 tick_labels = data['Date'].dt.strftime('%H:%M')
 
             fig.update_xaxes(
@@ -171,11 +122,14 @@ try:
             )
 
         # --- Öka höjden på trendfönstret ---
-        fig.update_layout(height=700)
+        fig.update_layout(
+            height=700
+        )
 
-        # 🔽 Y-AXELN – bibehåll som tidigare 🔽
+        # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
         price_min = data['Low'].min()
         price_max = data['High'].max()
+
         pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
         pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
 
