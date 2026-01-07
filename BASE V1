@@ -50,7 +50,7 @@ nasdaq_stocks = {
     "Telge": "TELGE.ST",
     "NCC": "NCC-B.ST",
     "SSAB": "SSAB-A.ST",
-    "Investor": "KINV-B.ST",
+    "Kinnevik B": "KINV-B.ST",
     "EQT": "EQT.ST",
     "Husqvarna": "HUSQ-B.ST",
     "Atlas Copco": "ATCO-B.ST",
@@ -184,17 +184,21 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
         price_max = data['High'].max()
         pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
         pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
+        
+        # --- Hämta företagsnamn från listan ---
+        company_name = next((name for name, sym in nasdaq_stocks.items() if sym == ticker), ticker)
 
         fig.update_layout(
-            title=f"{ticker} – {timeframe} trend",
-            xaxis_title="Datum",
-            yaxis_title="Pris",
-            yaxis=dict(
-                range=[price_min - pad_down, price_max + pad_up],
-                autorange=False,
-                rangemode="normal"
+        title=f"{company_name} – {timeframe} trend",
+        xaxis_title="Datum",
+        yaxis_title="Pris",
+        yaxis=dict(
+        range=[price_min - pad_down, price_max + pad_up],
+        autorange=False,
+        rangemode="normal"
             )
         )
+
         fig.update_layout(
         plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)'
