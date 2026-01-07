@@ -13,6 +13,26 @@ st.markdown(
         html, body, [class*="css"]  {
             font-family: 'Inter', sans-serif;
         }
+        /* Horisontella tidsknappar */
+        .time-btn {
+            display: inline-block;
+            margin: 0 5px 5px 0;
+            padding: 6px 14px;
+            background-color: #5a5a8a;
+            color: #ffffff;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+        .time-btn:hover {
+            background-color: #7a7ab0;
+        }
+        .time-btn-active {
+            background-color: #b39ddb;
+            color: #1f1f2e;
+        }
     </style>
     """,
     unsafe_allow_html=True
@@ -20,7 +40,7 @@ st.markdown(
 
 # --- TradePal logga istället för texttitel (mindre storlek) ---
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
-st.image(logo_url, width=250)  # Minska loggans bredd till 250px
+st.image(logo_url, width=250)
 
 # --- Gradientbakgrund ---
 st.markdown(
@@ -83,13 +103,24 @@ if ticker and not ticker.endswith(".ST"):
 # --- Horisontella knappar för tidsperiod ---
 timeframe_options = ["1d", "1w", "1m", "3m", "6m", "1y", "Max"]
 st.markdown("**Välj tidsperiod:**")
-cols = st.columns(len(timeframe_options))
-for i, tf in enumerate(timeframe_options):
-    if cols[i].button(tf):
-        st.session_state.selected_timeframe = tf
-
 if "selected_timeframe" not in st.session_state:
     st.session_state.selected_timeframe = "1d"
+
+# Rendera knappar
+time_btns_html = ""
+for tf in timeframe_options:
+    active_class = "time-btn-active" if st.session_state.selected_timeframe == tf else ""
+    # Generera en knapp som använder Streamlit forms för att uppdatera session_state
+    time_btns_html += f"""
+        <form action="" method="post" style="display:inline;">
+            <input type="submit" name="tf" value="{tf}" class="time-btn {active_class}">
+        </form>
+    """
+st.markdown(time_btns_html, unsafe_allow_html=True)
+
+# Fallback: hantera knapptryck
+if st.experimental_get_query_params().get("tf"):
+    st.session_state.selected_timeframe = st.experimental_get_query_params()["tf"][0]
 
 timeframe = st.session_state.selected_timeframe
 
@@ -135,7 +166,7 @@ try:
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
                 tick_labels = data['Date'].dt.strftime('%d-%m')
-            else:  # 3m
+            else:
                 tick_labels = data['Date'].dt.strftime('%H:%M')
 
             fig.update_xaxes(
@@ -147,15 +178,10 @@ try:
                 nticks=10
             )
 
-        # --- Öka höjden på trendfönstret ---
-        fig.update_layout(
-            height=700
-        )
+        fig.update_layout(height=700)
 
-        # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
         price_min = data['Low'].min()
         price_max = data['High'].max()
-
         pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
         pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
 
