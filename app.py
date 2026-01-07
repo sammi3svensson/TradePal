@@ -246,6 +246,64 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
             data['Datetime'] if 'Datetime' in data.columns else data['Date']
         )
 
+        # --- SIGNALER (KÖP / SÄLJ) ---
+signals = []
+
+# RSI
+delta = data['Close'].diff()
+gain = delta.clip(lower=0).rolling(14).mean()
+loss = -delta.clip(upper=0).rolling(14).mean()
+rs = gain / loss
+data['RSI'] = 100 - (100 / (1 + rs))
+
+# Glidande medelvärden
+data['MA20'] = data['Close'].rolling(20).mean()
+data['MA50'] = data['Close'].rolling(50).mean()
+
+for i in range(50, len(data)):
+    score_buy = 0
+    score_sell = 0
+
+    # --- KÖPSIGNALER ---
+    if data['RSI'].iloc[i] < 30:
+        score_buy += 20
+    if data['Close'].iloc[i] > data['MA20'].iloc[i] and data['Close'].iloc[i-1] <= data['MA20'].iloc[i-1]:
+        score_buy += 20
+    if data['MA20'].iloc[i] > data['MA50'].iloc[i]:
+        score_buy += 20
+    if data['Low'].iloc[i] == data['Low'].rolling(10).min().iloc[i]:
+        score_buy += 20
+    if data['Close'].iloc[i] > data['Close'].iloc[i-1]:
+        score_buy += 20
+
+    # --- SÄLJSIGNALER ---
+    if data['RSI'].iloc[i] > 70:
+        score_sell += 20
+    if data['Close'].iloc[i] < data['MA20'].iloc[i] and data['Close'].iloc[i-1] >= data['MA20'].iloc[i-1]:
+        score_sell += 20
+    if data['MA20'].iloc[i] < data['MA50'].iloc[i]:
+        score_sell += 20
+    if data['High'].iloc[i] == data['High'].rolling(10).max().iloc[i]:
+        score_sell += 20
+    if data['Close'].iloc[i] < data['Close'].iloc[i-1]:
+        score_sell += 20
+
+    if score_buy >= 60:
+        signals.append({
+            "type": "KÖP",
+            "date": data['Date'].iloc[i],
+            "price": data['Close'].iloc[i],
+            "score": score_buy
+        })
+
+    if score_sell >= 60:
+        signals.append({
+            "type": "SÄLJ",
+            "date": data['Date'].iloc[i],
+            "price": data['Close'].iloc[i],
+            "score": score_sell
+        })
+
         signals = calculate_signal_scores(data)
 
         if chart_type == "Candlestick":
