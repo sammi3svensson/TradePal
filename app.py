@@ -242,9 +242,15 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
             st.error(f"Inget data hittades för {ticker} i vald tidsram.")
             return
         data.reset_index(inplace=True)
-        data['Date'] = pd.to_datetime(
-            data['Datetime'] if 'Datetime' in data.columns else data['Date']
-        )
+        
+        # Säkerställa att Date-kolumn finns
+        if 'Datetime' in data.columns:
+            data['Date'] = pd.to_datetime(data['Datetime'])
+        elif 'Date' in data.columns:
+            data['Date'] = pd.to_datetime(data['Date'])
+        else:
+            st.error(f"Data innehåller varken 'Date' eller 'Datetime'.")
+            return
 
         # --- SIGNALER (KÖP / SÄLJ) ---
         signals = []
@@ -260,52 +266,72 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
         data['MA20'] = data['Close'].rolling(20).mean()
         data['MA50'] = data['Close'].rolling(50).mean()
 
+        # --- KÖP / SÄLJ SIGNALER ---
         for i in range(50, len(data)):
-                 score_buy = 0
-                 score_sell = 0
+            score_buy = 0
+            score_sell = 0
 
-    # --- KÖPSIGNALER ---
-        if data['RSI'].iloc[i] < 30:
-           score_buy += 20
-        if data['Close'].iloc[i] > data['MA20'].iloc[i] and data['Close'].iloc[i-1] <= data['MA20'].iloc[i-1]:
-           score_buy += 20
-        if data['MA20'].iloc[i] > data['MA50'].iloc[i]:
-           score_buy += 20
-        if data['Low'].iloc[i] == data['Low'].rolling(10).min().iloc[i]:
-           score_buy += 20
-        if data['Close'].iloc[i] > data['Close'].iloc[i-1]:
-           score_buy += 20
+            # --- KÖPSIGNALER ---
+            if data['RSI'].iloc[i] < 30:
+                score_buy += 20
+            if data['Close'].iloc[i] > data['MA20'].iloc[i] and data['Close'].iloc[i-1] <= data['MA20'].iloc[i-1]:
+                score_buy += 20
+            if data['MA20'].iloc[i] > data['MA50'].iloc[i]:
+                score_buy += 20
+            if data['Low'].iloc[i] == data['Low'].rolling(10).min().iloc[i]:
+                score_buy += 20
+            if data['Close'].iloc[i] > data['Close'].iloc[i-1]:
+                score_buy += 20
 
-    # --- SÄLJSIGNALER ---
-        if data['RSI'].iloc[i] > 70:
-           score_sell += 20
-        if data['Close'].iloc[i] < data['MA20'].iloc[i] and data['Close'].iloc[i-1] >= data['MA20'].iloc[i-1]:
-           score_sell += 20
-        if data['MA20'].iloc[i] < data['MA50'].iloc[i]:
-           score_sell += 20
-        if data['High'].iloc[i] == data['High'].rolling(10).max().iloc[i]:
-           score_sell += 20
-        if data['Close'].iloc[i] < data['Close'].iloc[i-1]:
-           score_sell += 20
+            # --- SÄLJSIGNALER ---
+            if data['RSI'].iloc[i] > 70:
+                score_sell += 20
+            if data['Close'].iloc[i] < data['MA20'].iloc[i] and data['Close'].iloc[i-1] >= data['MA20'].iloc[i-1]:
+                score_sell += 20
+            if data['MA20'].iloc[i] < data['MA50'].iloc[i]:
+                score_sell += 20
+            if data['High'].iloc[i] == data['High'].rolling(10).max().iloc[i]:
+                score_sell += 20
+            if data['Close'].iloc[i] < data['Close'].iloc[i-1]:
+                score_sell += 20
 
-        if score_buy >= 60:
-           signals.append({
-            "type": "KÖP",
-            "date": data['Date'].iloc[i],
-            "price": data['Close'].iloc[i],
-            "score": score_buy
-          })
+            # Lägg till signaler endast om score >= 60
+            if score_buy >= 60:
+                signals.append({
+                    "type": "KÖP",
+                    "date": data['Date'].iloc[i],
+                    "price": data['Close'].iloc[i],
+                    "score": score_buy
+                })
 
-        if score_sell >= 60:
-           signals.append({
-            "type": "SÄLJ",
-            "date": data['Date'].iloc[i],
-            "price": data['Close'].iloc[i],
-            "score": score_sell
-          })
+            if score_sell >= 60:
+                signals.append({
+                    "type": "SÄLJ",
+                    "date": data['Date'].iloc[i],
+                    "price": data['Close'].iloc[i],
+                    "score": score_sell
+                })
 
-        signals = calculate_signal_scores(data)
+        # --- Lägg till beräkning från signal engine ---
+        signals_engine = calculate_signal_scores(data)
 
+        # Lägg till "signals_engine" på ett säkert sätt
+        if signals_engine.get("buy_score", 0) > 0:
+            signals.append({
+                "type": "KÖP",
+                "date": data['Date'].iloc[-1],
+                "price": data['Close'].iloc[-1],
+                "score": signals_engine["buy_score"]
+            })
+        if signals_engine.get("sell_score", 0) > 0:
+            signals.append({
+                "type": "SÄLJ",
+                "date": data['Date'].iloc[-1],
+                "price": data['Close'].iloc[-1],
+                "score": signals_engine["sell_score"]
+            })
+
+        # --- Rita graf ---
         if chart_type == "Candlestick":
             fig = go.Figure(data=[go.Candlestick(
                 x=data['Date'],
@@ -325,38 +351,38 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
             )])
 
         # --- Rita K / S-symboler ---
-        buy_signals = [s for s in signals if s["type"] == "KÖP"]
-        sell_signals = [s for s in signals if s["type"] == "SÄLJ"]
+        buy_signals = [s for s in signals if isinstance(s, dict) and s.get("type") == "KÖP"]
+        sell_signals = [s for s in signals if isinstance(s, dict) and s.get("type") == "SÄLJ"]
 
         if buy_signals:
-           fig.add_trace(go.Scatter(
-           x=[s["date"] for s in buy_signals],
-           y=[s["price"] for s in buy_signals],
-           mode="markers",
-           marker=dict(symbol="triangle-up", size=12, color="lime"),
-           name="Köp",
-           hovertext=[
-            f"KÖP<br>Datum: {s['date'].date()}<br>Pris: {s['price']:.2f}<br>Poäng: {s['score']}/100"
-            for s in buy_signals
-             ],
-             hoverinfo="text"
+            fig.add_trace(go.Scatter(
+                x=[s["date"] for s in buy_signals],
+                y=[s["price"] for s in buy_signals],
+                mode="markers",
+                marker=dict(symbol="triangle-up", size=12, color="lime"),
+                name="Köp",
+                hovertext=[
+                    f"KÖP<br>Datum: {s['date'].date()}<br>Pris: {s['price']:.2f}<br>Poäng: {s['score']}/100"
+                    for s in buy_signals
+                ],
+                hoverinfo="text"
             ))
 
         if sell_signals:
-           fig.add_trace(go.Scatter(
-           x=[s["date"] for s in sell_signals],
-           y=[s["price"] for s in sell_signals],
-           mode="markers",
-           marker=dict(symbol="triangle-down", size=12, color="red"),
-           name="Sälj",
-           hovertext=[
-            f"SÄLJ<br>Datum: {s['date'].date()}<br>Pris: {s['price']:.2f}<br>Poäng: {s['score']}/100"
-            for s in sell_signals
-             ],
-             hoverinfo="text"
+            fig.add_trace(go.Scatter(
+                x=[s["date"] for s in sell_signals],
+                y=[s["price"] for s in sell_signals],
+                mode="markers",
+                marker=dict(symbol="triangle-down", size=12, color="red"),
+                name="Sälj",
+                hovertext=[
+                    f"SÄLJ<br>Datum: {s['date'].date()}<br>Pris: {s['price']:.2f}<br>Poäng: {s['score']}/100"
+                    for s in sell_signals
+                ],
+                hoverinfo="text"
             ))
 
-        # --- Ticklabels för 1w, 1m, 3m ---
+        # --- Ticklabels ---
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
                 tick_labels = data['Date'].dt.strftime('%d-%m')
@@ -377,25 +403,21 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
         price_min = data['Low'].min()
         price_max = data['High'].max()
         pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
-        pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
-        
-        # --- Hämta företagsnamn från listan ---
+        pad_up = max((price_max - price_min) * 0.20, price_max * 0.007)
+
         company_name = next((name for name, sym in nasdaq_stocks.items() if sym == ticker), ticker)
 
         fig.update_layout(
-        title=f"{company_name} – {timeframe} trend",
-        xaxis_title="Datum",
-        yaxis_title="Pris",
-        yaxis=dict(
-        range=[price_min - pad_down, price_max + pad_up],
-        autorange=False,
-        rangemode="normal"
-            )
-        )
-
-        fig.update_layout(
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)'
+            title=f"{company_name} – {timeframe} trend",
+            xaxis_title="Datum",
+            yaxis_title="Pris",
+            yaxis=dict(
+                range=[price_min - pad_down, price_max + pad_up],
+                autorange=False,
+                rangemode="normal"
+            ),
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)'
         )
 
         st.plotly_chart(fig, use_container_width=True)
