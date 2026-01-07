@@ -9,13 +9,20 @@ st.set_page_config(page_title="TradePal", layout="wide")
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
 st.image(logo_url, width=250)  # Minska loggans bredd till 250px
 
-# --- Subtil gradientbakgrund ---
+# --- Subtil gradientbakgrund + textskuggor ---
 st.markdown(
     """
     <style>
     .stApp {
         background: linear-gradient(180deg, #e9e6f5 0%, #ffffff 50%, #e9e6f5 100%);
         background-attachment: fixed;
+    }
+    /* Textfärg och subtil skugga för alla standardtexter */
+    .css-1d391kg, .css-1kyxreq, .css-1aumxhk, .stTextInput label, .stSelectbox label, .stRadio label, .stExpanderHeader {
+        color: #333333;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        font-family: "Arial", sans-serif;
+        font-weight: 600;
     }
     </style>
     """,
