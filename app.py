@@ -10,11 +10,11 @@ st.set_page_config(page_title="TradePal", layout="wide", page_icon=":chart_with_
 st.markdown(
     """
     <style>
-    /* Body & background */
+    /* Body & bakgrund */
     .stApp {
         background: linear-gradient(160deg, #f3f0ff 0%, #ffffff 100%);
         color: #1e1e2f;
-        font-family: 'Segoe UI', sans-serif;
+        font-family: 'Segoe UI', 'Roboto', sans-serif;
     }
     /* Header logga */
     .header-logo {
@@ -23,19 +23,20 @@ st.markdown(
         margin-bottom: 20px;
     }
     .header-logo img {
-        width: 120px;
+        width: 100px;  /* mindre logga */
         height: auto;
-        margin-right: 15px;
     }
-    .header-logo h1 {
-        font-size: 2.4rem;
-        font-weight: 700;
-        color: #5c4d7d;  /* subtil lila accent */
-        margin: 0;
+    /* Inputs, selectbox, radiobuttons */
+    .stTextInput>div>div>input, .stSelectbox>div>div>div>div {
+        background-color: rgba(255,255,255,0.9);
+        color: #1e1e2f;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 6px 10px;
     }
-    /* Radio & selectbox styling */
-    .stRadio, .stSelectbox {
-        margin-bottom: 20px;
+    .stRadio>div>div>label {
+        font-weight: 600;
+        color: #1e1e2f;
     }
     /* Buttons */
     button {
@@ -44,7 +45,7 @@ st.markdown(
         border-radius: 8px;
         padding: 5px 12px;
         border: none;
-        font-weight: 500;
+        font-weight: 600;
     }
     button:hover {
         background-color: #9a81c2;
@@ -52,18 +53,22 @@ st.markdown(
     /* Expander scrollbar */
     div[aria-expanded="false"] > .streamlit-expanderHeader {
         font-weight: 600;
+        color: #1e1e2f;
+    }
+    /* Trend graf bakgrund */
+    .stPlotlyChart {
+        background-color: rgba(255,255,255,0.0);
     }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# --- HEADER MED LOGGA ---
+# --- HEADER MED ENDAST LOGGA ---
 st.markdown(
     """
     <div class="header-logo">
         <img src="https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png" alt="TradePal Logo">
-        <h1>TradePal</h1>
     </div>
     """,
     unsafe_allow_html=True
@@ -170,22 +175,4 @@ try:
 
         # 🔽 Y-AXELN – bibehåll som tidigare 🔽
         price_min = data['Low'].min()
-        price_max = data['High'].max()
-        pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
-        pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
-
-        fig.update_layout(
-            title=f"{ticker} – {timeframe} trend",
-            xaxis_title="Datum",
-            yaxis_title="Pris",
-            yaxis=dict(
-                range=[price_min - pad_down, price_max + pad_up],
-                autorange=False,
-                rangemode="normal"
-            )
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
-
-except Exception as e:
-    st.error(f"Fel vid hämtning av data: {e}")
+        price_max = da_
