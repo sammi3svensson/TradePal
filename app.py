@@ -112,7 +112,7 @@ for i, tf in enumerate(timeframes):
     if st.session_state.timeframe == tf:
         btn_color = "#6c63ff"  # aktiv knapp
     else:
-        btn_color = "#000000"  # inaktiv knapp
+        btn_color = "#FFFFFF"  # inaktiv knapp
     if cols[i].button(tf, key=tf, help=f"Visa {tf} trend", use_container_width=True):
         st.session_state.timeframe = tf
 
