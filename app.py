@@ -265,44 +265,44 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
                  score_sell = 0
 
     # --- KÖPSIGNALER ---
-    if data['RSI'].iloc[i] < 30:
-        score_buy += 20
-    if data['Close'].iloc[i] > data['MA20'].iloc[i] and data['Close'].iloc[i-1] <= data['MA20'].iloc[i-1]:
-        score_buy += 20
-    if data['MA20'].iloc[i] > data['MA50'].iloc[i]:
-        score_buy += 20
-    if data['Low'].iloc[i] == data['Low'].rolling(10).min().iloc[i]:
-        score_buy += 20
-    if data['Close'].iloc[i] > data['Close'].iloc[i-1]:
-        score_buy += 20
+        if data['RSI'].iloc[i] < 30:
+           score_buy += 20
+        if data['Close'].iloc[i] > data['MA20'].iloc[i] and data['Close'].iloc[i-1] <= data['MA20'].iloc[i-1]:
+           score_buy += 20
+        if data['MA20'].iloc[i] > data['MA50'].iloc[i]:
+           score_buy += 20
+        if data['Low'].iloc[i] == data['Low'].rolling(10).min().iloc[i]:
+           score_buy += 20
+        if data['Close'].iloc[i] > data['Close'].iloc[i-1]:
+           score_buy += 20
 
     # --- SÄLJSIGNALER ---
-    if data['RSI'].iloc[i] > 70:
-        score_sell += 20
-    if data['Close'].iloc[i] < data['MA20'].iloc[i] and data['Close'].iloc[i-1] >= data['MA20'].iloc[i-1]:
-        score_sell += 20
-    if data['MA20'].iloc[i] < data['MA50'].iloc[i]:
-        score_sell += 20
-    if data['High'].iloc[i] == data['High'].rolling(10).max().iloc[i]:
-        score_sell += 20
-    if data['Close'].iloc[i] < data['Close'].iloc[i-1]:
-        score_sell += 20
+        if data['RSI'].iloc[i] > 70:
+           score_sell += 20
+        if data['Close'].iloc[i] < data['MA20'].iloc[i] and data['Close'].iloc[i-1] >= data['MA20'].iloc[i-1]:
+           score_sell += 20
+        if data['MA20'].iloc[i] < data['MA50'].iloc[i]:
+           score_sell += 20
+        if data['High'].iloc[i] == data['High'].rolling(10).max().iloc[i]:
+           score_sell += 20
+        if data['Close'].iloc[i] < data['Close'].iloc[i-1]:
+           score_sell += 20
 
-    if score_buy >= 60:
-        signals.append({
+        if score_buy >= 60:
+           signals.append({
             "type": "KÖP",
             "date": data['Date'].iloc[i],
             "price": data['Close'].iloc[i],
             "score": score_buy
-        })
+          })
 
-    if score_sell >= 60:
-        signals.append({
+        if score_sell >= 60:
+           signals.append({
             "type": "SÄLJ",
             "date": data['Date'].iloc[i],
             "price": data['Close'].iloc[i],
             "score": score_sell
-        })
+          })
 
         signals = calculate_signal_scores(data)
 
