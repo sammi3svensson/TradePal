@@ -90,6 +90,9 @@ st.text_input(
 
 if "selected_ticker" not in st.session_state:
     st.session_state.selected_ticker = ""
+    
+    ticker_input = ""
+
 
 # --- Lista med bolag som knappar i expander (scrollbar) ---
 with st.expander("Stockholmsbörsen", expanded=False):
