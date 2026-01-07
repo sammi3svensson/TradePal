@@ -17,12 +17,25 @@ st.markdown(
         background: linear-gradient(180deg, #e9e6f5 0%, #ffffff 50%, #e9e6f5 100%);
         background-attachment: fixed;
     }
-    /* Textfärg och subtil skugga för alla standardtexter */
+
+    /* Standardtext: färg + subtil skugga */
     .css-1d391kg, .css-1kyxreq, .css-1aumxhk, .stTextInput label, .stSelectbox label, .stRadio label, .stExpanderHeader {
         color: #333333;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
         font-family: "Arial", sans-serif;
         font-weight: 600;
+    }
+
+    /* Extra utmärkning för Stockholmsbörsen-expander text */
+    .stExpanderHeader {
+        color: #222222 !important;
+        text-shadow: 1px 1px 5px rgba(0,0,0,0.4);
+    }
+
+    /* Extra utmärkning för Candlestick / Linje radio-knappar */
+    .stRadio label {
+        color: #222222 !important;
+        text-shadow: 1px 1px 4px rgba(0,0,0,0.4);
     }
     </style>
     """,
