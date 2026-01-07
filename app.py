@@ -75,29 +75,30 @@ with st.expander("Stockholmsbörsen", expanded=False):
             ticker_input = symbol.replace(".ST", "")
     st.markdown("</div>", unsafe_allow_html=True)
 
-# --- Bestäm ticker ---
+# Bestäm vilken ticker som ska användas
 ticker = st.session_state.selected_ticker if st.session_state.selected_ticker else ticker_input.upper()
 if ticker and not ticker.endswith(".ST"):
     ticker += ".ST"
 
-# --- Grafinställningar ---
-chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"], horizontal=True)
-
-# --- Tidperioder med interaktiva horisontella knappar ---
+# --- Tidsperiod-knappar istället för dropdown ---
 timeframes = ["1d", "1w", "1m", "3m", "6m", "1y", "Max"]
-if "timeframe" not in st.session_state:
-    st.session_state.timeframe = "1d"
+if "selected_timeframe" not in st.session_state:
+    st.session_state.selected_timeframe = "1d"
+
+def set_timeframe(tf):
+    st.session_state.selected_timeframe = tf
 
 cols = st.columns(len(timeframes))
 for i, tf in enumerate(timeframes):
-    if st.session_state.timeframe == tf:
-        btn_color = "#6c63ff"  # aktiv knapp
-    else:
-        btn_color = "#cccccc"  # inaktiv knapp
-    if cols[i].button(tf, key=tf, help=f"Visa {tf} trend", use_container_width=True):
-        st.session_state.timeframe = tf
+    is_active = tf == st.session_state.selected_timeframe
+    btn_color = "#6C5DD3" if is_active else "rgba(255,255,255,0.1)"  # markerad vs transparent
+    if cols[i].button(tf, on_click=set_timeframe, args=(tf,), kwargs=None):
+        st.session_state.selected_timeframe = tf
 
-timeframe = st.session_state.timeframe
+timeframe = st.session_state.selected_timeframe
+
+# --- Grafinställningar ---
+chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"], horizontal=True)
 
 interval_map = {"1d": "5m", "1w": "15m", "1m": "30m", "3m": "1h", "6m": "1d", "1y": "1d", "Max": "1d"}
 period_map = {"1d": "1d", "1w": "7d", "1m": "1mo", "3m": "3mo", "6m": "6mo", "1y": "1y", "Max": "max"}
@@ -105,13 +106,12 @@ period_map = {"1d": "1d", "1w": "7d", "1m": "1mo", "3m": "3mo", "6m": "6mo", "1y
 interval = interval_map[timeframe]
 period = period_map[timeframe]
 
-# --- Funktion för att rita graf ---
-def plot_stock(ticker, timeframe, interval, period, chart_type):
-    try:
-        data = yf.Ticker(ticker).history(period=period, interval=interval)
-        if data.empty:
-            st.error(f"Inget data hittades för {ticker} i vald tidsram.")
-            return
+try:
+    data = yf.Ticker(ticker).history(period=period, interval=interval)
+
+    if data.empty:
+        st.error(f"Inget data hittades för {ticker} i vald tidsram.")
+    else:
         data.reset_index(inplace=True)
         data['Date'] = pd.to_datetime(
             data['Datetime'] if 'Datetime' in data.columns else data['Date']
@@ -135,11 +135,11 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
                 mode='lines'
             )])
 
-        # --- Ticklabels för 1w, 1m, 3m ---
+        # --- FIX: 1w, 1m, 3m → snygga ticklabels utan mikrosekunder ---
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
                 tick_labels = data['Date'].dt.strftime('%d-%m')
-            else:
+            else:  # 3m
                 tick_labels = data['Date'].dt.strftime('%H:%M')
 
             fig.update_xaxes(
@@ -151,10 +151,15 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
                 nticks=10
             )
 
-        fig.update_layout(height=700)
+        # --- Öka höjden på trendfönstret ---
+        fig.update_layout(
+            height=700
+        )
 
+        # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
         price_min = data['Low'].min()
         price_max = data['High'].max()
+
         pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
         pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
 
@@ -171,8 +176,5 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
 
         st.plotly_chart(fig, use_container_width=True)
 
-    except Exception as e:
-        st.error(f"Fel vid hämtning av data: {e}")
-
-# --- Rita graf ---
-plot_stock(ticker, timeframe, interval, period, chart_type)
+except Exception as e:
+    st.error(f"Fel vid hämtning av data: {e}")
