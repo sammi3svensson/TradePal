@@ -358,8 +358,15 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
             fig.add_trace(go.Scatter(
                 x=[s["date"] for s in buy_signals],
                 y=[s["price"] for s in buy_signals],
-                mode="markers",
-                marker=dict(symbol="triangle-up", size=12, color="lime"),
+                mode="markers+text",
+                marker=dict(
+                    size=20,       # Storlek på cirkeln
+                    color="lime",  # Grön cirkel
+                    symbol="circle",
+                    line=dict(color="black", width=2)  # Svart kantlinje
+                ),
+                text=["K"]*len(buy_signals),
+                textposition="middle center",
                 name="Köp",
                 hovertext=[
                     f"KÖP<br>Datum: {s['date'].date()}<br>Pris: {s['price']:.2f}<br>Poäng: {s['score']}/100"
@@ -372,15 +379,22 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
             fig.add_trace(go.Scatter(
                 x=[s["date"] for s in sell_signals],
                 y=[s["price"] for s in sell_signals],
-                mode="markers",
-                marker=dict(symbol="triangle-down", size=12, color="red"),
+                mode="markers+text",
+                marker=dict(
+                   size=20,       # Storlek på cirkeln
+                   color="red",   # Röd cirkel
+                   symbol="circle",
+                   line=dict(color="black", width=2)  # Svart kantlinje
+                ),
+                text=["S"]*len(sell_signals),
+                textposition="middle center",
                 name="Sälj",
                 hovertext=[
                     f"SÄLJ<br>Datum: {s['date'].date()}<br>Pris: {s['price']:.2f}<br>Poäng: {s['score']}/100"
                     for s in sell_signals
                 ],
                 hoverinfo="text"
-            ))
+           ))
 
         # --- Ticklabels ---
         if timeframe in ["1w", "1m", "3m"]:
