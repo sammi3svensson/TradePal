@@ -102,19 +102,45 @@ if ticker and not ticker.endswith(".ST"):
 # --- Grafinställningar ---
 chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"], horizontal=True)
 
-# --- Tidperioder med interaktiva horisontella knappar ---
+# --- Tidperioder med interaktiva horisontella knappar (transparenta, aktiv knapp markerad) ---
 timeframes = ["1d", "1w", "1m", "3m", "6m", "1y", "Max"]
 if "timeframe" not in st.session_state:
     st.session_state.timeframe = "1d"
 
 cols = st.columns(len(timeframes))
 for i, tf in enumerate(timeframes):
+    # CSS-klass för aktiv/inaktiv knapp
     if st.session_state.timeframe == tf:
-        btn_color = "#6c63ff"  # aktiv knapp
+        btn_style = """
+        background-color: rgba(255,255,255,0.2);
+        color: #ffffff;
+        border: 1px solid #ffffff;
+        border-radius: 5px;
+        font-weight: 600;
+        """
     else:
-        btn_color = "#FFFFFF"  # inaktiv knapp
-    if cols[i].button(tf, key=tf, help=f"Visa {tf} trend", use_container_width=True):
+        btn_style = """
+        background-color: rgba(0,0,0,0.0);  /* transparent */
+        color: #ffffff;
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 5px;
+        font-weight: 600;
+        """
+
+    if cols[i].button(tf, key=tf, help=f"Visa {tf} trend"):
         st.session_state.timeframe = tf
+
+    # Använd CSS för att styla knappen
+    st.markdown(
+        f"""
+        <style>
+        div.stButton > button[key="{tf}"] {{
+            {btn_style}
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
 timeframe = st.session_state.timeframe
 
