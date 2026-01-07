@@ -17,21 +17,6 @@ st.markdown(
         .time-btn {
             display: inline-block;
             margin: 0 5px 5px 0;
-            padding: 6px 14px;
-            background-color: #5a5a8a;
-            color: #ffffff;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s ease;
-        }
-        .time-btn:hover {
-            background-color: #7a7ab0;
-        }
-        .time-btn-active {
-            background-color: #b39ddb;
-            color: #1f1f2e;
         }
     </style>
     """,
@@ -100,27 +85,21 @@ ticker = st.session_state.selected_ticker if st.session_state.selected_ticker el
 if ticker and not ticker.endswith(".ST"):
     ticker += ".ST"
 
-# --- Horisontella knappar för tidsperiod ---
+# --- Horisontella tidsknappar med on_click ---
 timeframe_options = ["1d", "1w", "1m", "3m", "6m", "1y", "Max"]
-st.markdown("**Välj tidsperiod:**")
 if "selected_timeframe" not in st.session_state:
     st.session_state.selected_timeframe = "1d"
 
-# Rendera knappar
-time_btns_html = ""
-for tf in timeframe_options:
-    active_class = "time-btn-active" if st.session_state.selected_timeframe == tf else ""
-    # Generera en knapp som använder Streamlit forms för att uppdatera session_state
-    time_btns_html += f"""
-        <form action="" method="post" style="display:inline;">
-            <input type="submit" name="tf" value="{tf}" class="time-btn {active_class}">
-        </form>
-    """
-st.markdown(time_btns_html, unsafe_allow_html=True)
+def set_timeframe(tf):
+    st.session_state.selected_timeframe = tf
 
-# Fallback: hantera knapptryck
-if st.experimental_get_query_params().get("tf"):
-    st.session_state.selected_timeframe = st.experimental_get_query_params()["tf"][0]
+st.markdown("**Välj tidsperiod:**")
+cols = st.columns(len(timeframe_options))
+for i, tf in enumerate(timeframe_options):
+    btn_style = "background-color: #b39ddb; color: #1f1f2e; font-weight: 600;" if st.session_state.selected_timeframe == tf else ""
+    with cols[i]:
+        if st.button(tf, key=tf, on_click=set_timeframe, args=(tf,)):
+            st.session_state.selected_timeframe = tf
 
 timeframe = st.session_state.selected_timeframe
 
