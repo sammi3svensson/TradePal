@@ -9,12 +9,12 @@ st.set_page_config(page_title="TradePal", layout="wide")
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
 st.image(logo_url, width=250)
 
-# --- Bakgrund med subtil gradient ---
+# --- Återgå till tidigare subtila gradientbakgrund ---
 st.markdown(
     """
     <style>
     .stApp {
-        background: linear-gradient(135deg, #4b3f72 0%, #7c6ca5 100%);
+        background: linear-gradient(135deg, #4b3f72 0%, #7b61a1 100%);
         background-attachment: fixed;
     }
 
