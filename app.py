@@ -3,62 +3,11 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 
-# --- Sida och färgtema ---
 st.set_page_config(page_title="TradePal", layout="wide")
 
-# --- Lägg till stil: subtil lila gradient för hela sidan ---
-st.markdown(
-    """
-    <style>
-    /* Body gradient */
-    .stApp {
-        background: linear-gradient(135deg, #f8f8ff, #eae6f8);
-        color: #2c2c2c;
-    }
-
-    /* Scrollbar */
-    div[role="listbox"]::-webkit-scrollbar {
-        width: 8px;
-    }
-    div[role="listbox"]::-webkit-scrollbar-thumb {
-        background-color: #9b7fd8;
-        border-radius: 4px;
-    }
-
-    /* Buttons */
-    .stButton>button {
-        background-color: #a386d0;
-        color: white;
-        border-radius: 8px;
-        padding: 0.35em 0.8em;
-        border: none;
-        font-weight: bold;
-        transition: 0.3s;
-    }
-    .stButton>button:hover {
-        background-color: #8c63c2;
-        color: white;
-    }
-
-    /* Inputs */
-    .stTextInput>div>div>input {
-        border-radius: 8px;
-        border: 1px solid #cfc9e8;
-        padding: 0.5em;
-    }
-
-    /* Radio/Selectbox */
-    .stRadio>div>div>label, .stSelectbox>div>div>label {
-        font-weight: bold;
-        color: #5e4b8b;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-# --- Visa logga istället för texttitel ---
-st.image("/mnt/data/A_logo_design_for_\"TradePal\"_is_displayed_on_a_dar.png", use_column_width=True)
+# --- TradePal logga istället för texttitel ---
+logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
+st.image(logo_url, use_column_width=True)
 
 # --- Svenska Nasdaq aktier med företagsnamn ---
 nasdaq_stocks = {
@@ -86,6 +35,7 @@ nasdaq_stocks = {
 # --- Sökfält ---
 ticker_input = st.text_input("Sök ticker", "")
 
+# Om användaren inte skrivit in nåt men klickat på knapp lagras tickern här
 if "selected_ticker" not in st.session_state:
     st.session_state.selected_ticker = ""
 
@@ -101,7 +51,7 @@ with st.expander("Stockholmsbörsen", expanded=False):
             ticker_input = symbol.replace(".ST", "")
     st.markdown("</div>", unsafe_allow_html=True)
 
-# --- Bestäm ticker ---
+# Bestäm vilken ticker som ska användas
 ticker = st.session_state.selected_ticker if st.session_state.selected_ticker else ticker_input.upper()
 if ticker and not ticker.endswith(".ST"):
     ticker += ".ST"
@@ -118,6 +68,7 @@ period = period_map[timeframe]
 
 try:
     data = yf.Ticker(ticker).history(period=period, interval=interval)
+
     if data.empty:
         st.error(f"Inget data hittades för {ticker} i vald tidsram.")
     else:
@@ -144,11 +95,13 @@ try:
                 mode='lines'
             )])
 
-        # --- Fix ticklabels 1w, 1m, 3m ---
+        # --- FIX: 1w, 1m, 3m → snygga ticklabels utan mikrosekunder ---
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
+                # Visa dag-månad för 1w och 1m
                 tick_labels = data['Date'].dt.strftime('%d-%m')
-            else:
+            else:  # 3m
+                # Visa timme:minut för 3m
                 tick_labels = data['Date'].dt.strftime('%H:%M')
 
             fig.update_xaxes(
@@ -160,11 +113,15 @@ try:
                 nticks=10
             )
 
-        fig.update_layout(height=700)
+        # --- Öka höjden på trendfönstret ---
+        fig.update_layout(
+            height=700
+        )
 
-        # 🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽
+        # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
         price_min = data['Low'].min()
         price_max = data['High'].max()
+
         pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
         pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
 
