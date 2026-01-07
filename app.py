@@ -247,18 +247,18 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
         )
 
         # --- SIGNALER (KÖP / SÄLJ) ---
-signals = []
+        signals = []
 
-# RSI
-delta = data['Close'].diff()
-gain = delta.clip(lower=0).rolling(14).mean()
-loss = -delta.clip(upper=0).rolling(14).mean()
-rs = gain / loss
-data['RSI'] = 100 - (100 / (1 + rs))
+        # RSI
+        delta = data['Close'].diff()
+        gain = delta.clip(lower=0).rolling(14).mean()
+        loss = -delta.clip(upper=0).rolling(14).mean()
+        rs = gain / loss
+        data['RSI'] = 100 - (100 / (1 + rs))
 
-# Glidande medelvärden
-data['MA20'] = data['Close'].rolling(20).mean()
-data['MA50'] = data['Close'].rolling(50).mean()
+        # Glidande medelvärden
+        data['MA20'] = data['Close'].rolling(20).mean()
+        data['MA50'] = data['Close'].rolling(50).mean()
 
 for i in range(50, len(data)):
     score_buy = 0
