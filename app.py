@@ -260,9 +260,9 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
         data['MA20'] = data['Close'].rolling(20).mean()
         data['MA50'] = data['Close'].rolling(50).mean()
 
-           for i in range(50, len(data)):
-       score_buy = 0
-       score_sell = 0
+        for i in range(50, len(data)):
+        score_buy = 0
+        score_sell = 0
 
     # --- KÖPSIGNALER ---
     if data['RSI'].iloc[i] < 30:
