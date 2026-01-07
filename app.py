@@ -175,4 +175,22 @@ try:
 
         # 🔽 Y-AXELN – bibehåll som tidigare 🔽
         price_min = data['Low'].min()
-        price_max = da_
+        price_max = data['High'].max()
+        pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
+        pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
+
+        fig.update_layout(
+            title=f"{ticker} – {timeframe} trend",
+            xaxis_title="Datum",
+            yaxis_title="Pris",
+            yaxis=dict(
+                range=[price_min - pad_down, price_max + pad_up],
+                autorange=False,
+                rangemode="normal"
+            )
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+except Exception as e:
+    st.error(f"Fel vid hämtning av data: {e}")
