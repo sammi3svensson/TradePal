@@ -26,15 +26,15 @@ st.markdown(
         font-weight: 600;
     }
 
-    /* Extra utmärkning för Stockholmsbörsen-expander text */
+    /* Stockholmsbörsen-expander: svart text + skugga */
     .stExpanderHeader {
-        color: #222222 !important;
+        color: #000000 !important;
         text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
     }
 
-    /* Extra utmärkning för Candlestick / Linje radio-knappar */
+    /* Candlestick / Linje radio-knappar: svart text + skugga */
     .stRadio label {
-        color: #222222 !important;
+        color: #000000 !important;
         text-shadow: 2px 2px 5px rgba(0,0,0,0.6);
     }
     </style>
