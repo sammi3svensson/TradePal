@@ -243,6 +243,8 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
             data['Datetime'] if 'Datetime' in data.columns else data['Date']
         )
 
+        signals = calculate_signal_scores(data)
+
         if chart_type == "Candlestick":
             fig = go.Figure(data=[go.Candlestick(
                 x=data['Date'],
