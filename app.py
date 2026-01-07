@@ -50,7 +50,7 @@ nasdaq_stocks = {
     "Telge": "TELGE.ST",
     "NCC": "NCC-B.ST",
     "SSAB": "SSAB-A.ST",
-    "Investor": "KINV-B.ST",
+    "Kinnevik B": "KINV-B.ST",
     "EQT": "EQT.ST",
     "Husqvarna": "HUSQ-B.ST",
     "Atlas Copco": "ATCO-B.ST",
