@@ -20,7 +20,7 @@ st.markdown(
 
 # --- TradePal logga istället för texttitel (mindre storlek) ---
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
-st.image(logo_url, width=250)  # Minska loggans bredd till 250px
+st.image(logo_url, width=250)
 
 # --- Gradientbakgrund ---
 st.markdown(
@@ -88,14 +88,24 @@ timeframes = ["1d", "1w", "1m", "3m", "6m", "1y", "Max"]
 if "timeframe" not in st.session_state:
     st.session_state.timeframe = "1d"
 
+def set_timeframe(tf):
+    st.session_state.timeframe = tf
+
 cols = st.columns(len(timeframes))
 for i, tf in enumerate(timeframes):
     if st.session_state.timeframe == tf:
-        btn_color = "#6c63ff"  # aktiv knapp
+        style = "border: 2px solid #6c63ff; background-color: rgba(0,0,0,0); color: #ffffff;"
     else:
-        btn_color = "#cccccc"  # inaktiv knapp
-    if cols[i].button(tf, key=tf, help=f"Visa {tf} trend", use_container_width=True):
-        st.session_state.timeframe = tf
+        style = "border: 2px solid #555555; background-color: rgba(0,0,0,0); color: #cccccc;"
+    cols[i].button(
+        tf,
+        key=tf,
+        help=f"Visa {tf} trend",
+        on_click=set_timeframe,
+        args=(tf,),
+        kwargs={},
+        use_container_width=True
+    )
 
 timeframe = st.session_state.timeframe
 
