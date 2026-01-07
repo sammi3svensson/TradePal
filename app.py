@@ -5,9 +5,9 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="TradePal", layout="wide")
 
-# --- TradePal logga istället för texttitel ---
+# --- TradePal logga istället för texttitel (mindre storlek) ---
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
-st.image(logo_url, use_column_width=True)
+st.image(logo_url, width=250)  # Minska loggans bredd till 250px
 
 # --- Svenska Nasdaq aktier med företagsnamn ---
 nasdaq_stocks = {
