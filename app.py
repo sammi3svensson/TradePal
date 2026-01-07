@@ -284,7 +284,6 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
                 score_buy += 20
 
             # --- SÄLJSIGNALER ---
-            lookback = 5  # antal dagar för lokal topp
             if data['RSI'].iloc[i] > 70:
                 score_sell += 20
             if data['Close'].iloc[i] < data['MA20'].iloc[i] and data['Close'].iloc[i-1] >= data['MA20'].iloc[i-1]:
@@ -296,16 +295,22 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
             if data['Close'].iloc[i] < data['Close'].iloc[i-1]:
                 score_sell += 20
 
-            # --- Lägg till signaler endast om score >= 80 OCH lokalt toppfilter ---
-            if score_sell >= 80:
-                # Kolla lokal topp: dagens high är max i lookback
-                if data['High'].iloc[i] == data['High'].rolling(lookback).max().iloc[i] and data['RSI'].iloc[i] >= 80 and data['MA20'].iloc[i] < data['MA50'].iloc[i]:
-                    signals.append({
-                        "type": "SÄLJ",
-                        "date": data['Date'].iloc[i],
-                        "price": data['Close'].iloc[i],
-                        "score": score_sell
-                   })
+            # Lägg till signaler endast om score >= 60
+            if score_buy >= 60:
+                signals.append({
+                    "type": "KÖP",
+                    "date": data['Date'].iloc[i],
+                    "price": data['Close'].iloc[i],
+                    "score": score_buy
+                })
+
+            if score_sell >= 60:
+                signals.append({
+                    "type": "SÄLJ",
+                    "date": data['Date'].iloc[i],
+                    "price": data['Close'].iloc[i],
+                    "score": score_sell
+                })
 
         # --- Lägg till beräkning från signal engine ---
         signals_engine = calculate_signal_scores(data)
