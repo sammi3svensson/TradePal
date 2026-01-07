@@ -5,26 +5,27 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="TradePal", layout="wide")
 
+# --- Monstrose-stil font för hela sidan ---
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    html, body, [class*="css"]  {
+        font-family: 'Inter', sans-serif;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Inter', sans-serif;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # --- TradePal logga istället för texttitel (mindre storlek) ---
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
 st.image(logo_url, width=250)  # Minska loggans bredd till 250px
-
-# --- CSS för svart text och lätt skuggning på radio-knappar och expander ---
-st.markdown("""
-<style>
-/* Candlestick / Linje radio buttons */
-[data-baseweb="radio"] label {
-    color: black !important;
-    text-shadow: 1px 1px 2px #ffffff99;
-}
-
-/* Stockholmsbörsen expander */
-.st-expanderHeader {
-    color: black !important;
-    text-shadow: 1px 1px 2px #ffffff99;
-}
-</style>
-""", unsafe_allow_html=True)
 
 # --- Svenska Nasdaq aktier med företagsnamn ---
 nasdaq_stocks = {
@@ -115,10 +116,8 @@ try:
         # --- FIX: 1w, 1m, 3m → snygga ticklabels utan mikrosekunder ---
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
-                # Visa dag-månad för 1w och 1m
                 tick_labels = data['Date'].dt.strftime('%d-%m')
             else:  # 3m
-                # Visa timme:minut för 3m
                 tick_labels = data['Date'].dt.strftime('%H:%M')
 
             fig.update_xaxes(
