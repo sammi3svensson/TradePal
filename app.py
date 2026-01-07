@@ -3,47 +3,60 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 
-# --- SIDINSTÄLLNINGAR ---
-st.set_page_config(page_title="TradePal", layout="wide")
+# --- Sida och theme ---
+st.set_page_config(
+    page_title="TradePal",
+    layout="wide",
+    page_icon="🚀"
+)
 
-# --- MODERN STIL: Bakgrund & CSS ---
-st.markdown("""
-<style>
-    /* Gradient bakgrund */
+# --- Stil med CSS: gradientbakgrund, logga, scrollbar på expander ---
+st.markdown(
+    """
+    <style>
+    /* Bakgrund: subtil lila/rymd-gradient */
     .stApp {
-        background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+        background: linear-gradient(135deg, #2a1f4f 0%, #6b3fa0 100%);
+        background-attachment: fixed;
         color: #ffffff;
+        font-family: 'Arial', sans-serif;
     }
 
-    /* Titeln */
-    h1 {
-        color: #00bfff;
-        font-family: 'Arial Black', sans-serif;
+    /* Header logga */
+    .header-logo {
+        display: flex;
+        align-items: center;
+        justify-content: left;
+        padding-bottom: 20px;
+    }
+    .header-logo img {
+        height: 60px;
     }
 
-    /* Knappar */
-    div.stButton > button {
-        background: linear-gradient(90deg, #00bfff, #1e90ff);
-        color: white;
-        font-weight: bold;
-        border-radius: 10px;
-        padding: 0.5em 1.5em;
-        transition: transform 0.2s;
-    }
-    div.stButton > button:hover {
-        transform: scale(1.05);
-        background: linear-gradient(90deg, #1e90ff, #00bfff);
+    /* Expander scrollbar */
+    .stExpander > div {
+        max-height: 300px;
+        overflow-y: auto;
     }
 
-    /* Expander scroll */
-    .streamlit-expanderHeader {
-        color: #00bfff !important;
-        font-weight: bold;
+    /* Plot container padding */
+    .element-container {
+        padding: 10px;
     }
-</style>
-""", unsafe_allow_html=True)
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
-st.title("TradePal – Smart signalanalys för svenska aktier")
+# --- Header med logga ---
+st.markdown(
+    """
+    <div class="header-logo">
+        <img src="https://i.imgur.com/jK6nB7E.png" alt="TradePal Logo">
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # --- Svenska Nasdaq aktier med företagsnamn ---
 nasdaq_stocks = {
@@ -76,14 +89,10 @@ if "selected_ticker" not in st.session_state:
 
 # --- Lista med bolag som knappar i expander (scrollbar) ---
 with st.expander("Stockholmsbörsen", expanded=False):
-    st.markdown("""
-        <div style="max-height: 300px; overflow-y: auto; width: fit-content;">
-    """, unsafe_allow_html=True)
     for name, symbol in nasdaq_stocks.items():
         if st.button(f"{name} – {symbol.replace('.ST','')}"):
             st.session_state.selected_ticker = symbol
             ticker_input = symbol.replace(".ST", "")
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # --- Bestäm ticker ---
 ticker = st.session_state.selected_ticker if st.session_state.selected_ticker else ticker_input.upper()
@@ -111,7 +120,6 @@ try:
             data['Datetime'] if 'Datetime' in data.columns else data['Date']
         )
 
-        # --- GRAF ---
         if chart_type == "Candlestick":
             fig = go.Figure(data=[go.Candlestick(
                 x=data['Date'],
@@ -119,27 +127,18 @@ try:
                 high=data['High'],
                 low=data['Low'],
                 close=data['Close'],
-                increasing_line_color='rgba(0,191,255,0.8)',
-                decreasing_line_color='rgba(255,99,71,0.8)',
-                whiskerwidth=0.2,
-                hovertemplate=
-                    "<b>%{x|%d-%m %H:%M}</b><br>" +
-                    "Open: %{open:.2f} SEK<br>" +
-                    "High: %{high:.2f} SEK<br>" +
-                    "Low: %{low:.2f} SEK<br>" +
-                    "Close: %{close:.2f} SEK<br><extra></extra>"
+                increasing_line_color='green',
+                decreasing_line_color='red',
+                whiskerwidth=0.2
             )])
         else:
             fig = go.Figure(data=[go.Scatter(
                 x=data['Date'],
                 y=data['Close'],
-                mode='lines+markers',
-                line=dict(color='rgba(0,191,255,0.9)', width=2),
-                marker=dict(size=4),
-                hovertemplate="<b>%{x|%d-%m %H:%M}</b><br>Pris: %{y:.2f} SEK<extra></extra>"
+                mode='lines'
             )])
 
-        # --- FIX: 1w, 1m, 3m → snygga ticklabels ---
+        # --- FIX: 1w, 1m, 3m → snygga ticklabels utan mikrosekunder ---
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
                 tick_labels = data['Date'].dt.strftime('%d-%m')
@@ -155,10 +154,10 @@ try:
                 nticks=10
             )
 
-        # --- Öka höjd på trendfönster ---
+        # --- Öka höjden på trendfönstret ---
         fig.update_layout(height=700)
 
-        # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
+        # 🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽
         price_min = data['Low'].min()
         price_max = data['High'].max()
 
@@ -173,10 +172,7 @@ try:
                 range=[price_min - pad_down, price_max + pad_up],
                 autorange=False,
                 rangemode="normal"
-            ),
-            plot_bgcolor='rgba(20,20,30,0.9)',  # mörk bakgrund i plot
-            paper_bgcolor='rgba(20,20,30,0.9)',
-            font=dict(color='white')
+            )
         )
 
         st.plotly_chart(fig, use_container_width=True)
