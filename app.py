@@ -5,13 +5,14 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="TradePal", layout="wide")
 
-# --- Subtil gradientbakgrund med logga ---
+# --- Elegant, rymlig gradientbakgrund (Montrose-inspirerad) ---
 st.markdown(
     """
     <style>
     .stApp {
-        background: linear-gradient(to bottom right, #f2f0f8, #d6c9f2);
+        background: linear-gradient(135deg, #f0f0f8 0%, #e0d9f8 40%, #c7bff2 70%, #b8a9f0 100%);
         background-attachment: fixed;
+        background-size: cover;
     }
     </style>
     """,
