@@ -132,6 +132,104 @@ period_map = {"1d": "1d", "1w": "7d", "1m": "1mo", "3m": "3mo", "6m": "6mo", "1y
 
 interval = interval_map[timeframe]
 period = period_map[timeframe]
+# =========================
+# SIGNAL ENGINE (TradePal)
+# =========================
+
+def calculate_rsi(series, period=14):
+    delta = series.diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+
+    avg_gain = gain.rolling(period).mean()
+    avg_loss = loss.rolling(period).mean()
+
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
+
+def buy_rsi_signal(data):
+    rsi = calculate_rsi(data['Close'])
+    if rsi.iloc[-1] < 30:
+        return {"points": 20, "reason": f"RSI översåld ({int(rsi.iloc[-1])})"}
+    elif rsi.iloc[-1] < 35:
+        return {"points": 10, "reason": f"RSI låg ({int(rsi.iloc[-1])})"}
+    return {"points": 0, "reason": ""}
+
+
+def sell_rsi_signal(data):
+    rsi = calculate_rsi(data['Close'])
+    if rsi.iloc[-1] > 70:
+        return {"points": 20, "reason": f"RSI överköpt ({int(rsi.iloc[-1])})"}
+    elif rsi.iloc[-1] > 65:
+        return {"points": 10, "reason": f"RSI hög ({int(rsi.iloc[-1])})"}
+    return {"points": 0, "reason": ""}
+
+
+def volume_spike_signal(data):
+    avg_vol = data['Volume'].rolling(20).mean()
+    if data['Volume'].iloc[-1] > avg_vol.iloc[-1] * 1.8:
+        return {"points": 20, "reason": "Volymspik"}
+    return {"points": 0, "reason": ""}
+
+
+def trend_reversal_candle(data):
+    candle = data.iloc[-1]
+    body = abs(candle['Close'] - candle['Open'])
+    wick = candle['Low'] < min(candle['Open'], candle['Close']) - body * 2
+
+    if wick:
+        return {"points": 20, "reason": "Reversal-candle"}
+    return {"points": 0, "reason": ""}
+
+
+def mean_reversion_signal(data):
+    ema = data['Close'].ewm(span=20).mean()
+    deviation = (data['Close'].iloc[-1] - ema.iloc[-1]) / ema.iloc[-1]
+
+    if deviation < -0.05:
+        return {"points": 20, "reason": "Mean reversion (nedåt)"}
+    if deviation > 0.05:
+        return {"points": 20, "reason": "Mean reversion (uppåt)"}
+    return {"points": 0, "reason": ""}
+
+
+def calculate_signal_scores(data):
+    buy_score = 0
+    sell_score = 0
+    buy_reasons = []
+    sell_reasons = []
+
+    # KÖP
+    for signal in [
+        buy_rsi_signal,
+        volume_spike_signal,
+        trend_reversal_candle,
+        mean_reversion_signal
+    ]:
+        result = signal(data)
+        buy_score += result["points"]
+        if result["reason"]:
+            buy_reasons.append(result["reason"])
+
+    # SÄLJ
+    rsi_sell = sell_rsi_signal(data)
+    sell_score += rsi_sell["points"]
+    if rsi_sell["reason"]:
+        sell_reasons.append(rsi_sell["reason"])
+
+    mean_rev_sell = mean_reversion_signal(data)
+    sell_score += mean_rev_sell["points"]
+    if mean_rev_sell["reason"]:
+        sell_reasons.append(mean_rev_sell["reason"])
+
+    return {
+        "buy_score": min(buy_score, 100),
+        "sell_score": min(sell_score, 100),
+        "buy_reasons": buy_reasons,
+        "sell_reasons": sell_reasons
+    }
 
 # --- Funktion för att rita graf ---
 def plot_stock(ticker, timeframe, interval, period, chart_type):
