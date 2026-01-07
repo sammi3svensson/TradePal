@@ -22,7 +22,7 @@ st.markdown(
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
 st.image(logo_url, width=250)  # Minska loggans bredd till 250px
 
-# --- Gradientbakgrund som tidigare ---
+# --- Gradientbakgrund ---
 st.markdown(
     """
     <style>
@@ -80,9 +80,21 @@ ticker = st.session_state.selected_ticker if st.session_state.selected_ticker el
 if ticker and not ticker.endswith(".ST"):
     ticker += ".ST"
 
+# --- Horisontella knappar för tidsperiod ---
+timeframe_options = ["1d", "1w", "1m", "3m", "6m", "1y", "Max"]
+st.markdown("**Välj tidsperiod:**")
+cols = st.columns(len(timeframe_options))
+for i, tf in enumerate(timeframe_options):
+    if cols[i].button(tf):
+        st.session_state.selected_timeframe = tf
+
+if "selected_timeframe" not in st.session_state:
+    st.session_state.selected_timeframe = "1d"
+
+timeframe = st.session_state.selected_timeframe
+
 # --- Grafinställningar ---
 chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"], horizontal=True)
-timeframe = st.selectbox("Välj tidsperiod", ["1d", "1w", "1m", "3m", "6m", "1y", "Max"])
 
 interval_map = {"1d": "5m", "1w": "15m", "1m": "30m", "3m": "1h", "6m": "1d", "1y": "1d", "Max": "1d"}
 period_map = {"1d": "1d", "1w": "7d", "1m": "1mo", "3m": "3mo", "6m": "6mo", "1y": "1y", "Max": "max"}
