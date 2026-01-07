@@ -357,7 +357,7 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
         ]
         sell_signals = [
             s for s in signals 
-            if isinstance(s, dict) and s.get("type") == "SÄLJ" and s.get("score", 0) >= 60
+            if isinstance(s, dict) and s.get("type") == "SÄLJ" and s.get("score", 0) >= 80
         ]
 
         if buy_signals:
