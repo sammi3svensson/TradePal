@@ -58,6 +58,20 @@ nasdaq_stocks = {
 }
 
 # --- Sökfält ---
+st.markdown(
+    """
+    <style>
+    /* Gör textfältet transparent med vit text och ljus kant */
+    div.stTextInput > div > input {
+        background: rgba(0,0,0,0);  /* transparent */
+        color: white;               /* textfärg */
+        border: 1px solid rgba(255,255,255,0.5); /* ljus kant */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 ticker_input = st.text_input("Sök ticker", "")
 
 if "selected_ticker" not in st.session_state:
