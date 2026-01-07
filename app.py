@@ -61,14 +61,13 @@ nasdaq_stocks = {
 st.markdown(
     """
     <style>
-    /* Transparent sökfält med vit text och subtil kant */
     input[type="text"] {
-        background-color: rgba(0,0,0,0) !important;  /* gör input transparent */
-        color: white !important;                     /* texten blir vit */
-        border: 1px solid rgba(255,255,255,0.5) !important; /* subtil kant */
+        background-color: #2e2e4a !important;
+        color: white !important;
+        border: 1px solid rgba(255,255,255,0.3) !important;
+        border-radius: 4px;
     }
 
-    /* Label/text över input */
     label[data-baseweb="label"] {
         color: white !important;
     }
@@ -78,6 +77,7 @@ st.markdown(
 )
 
 ticker_input = st.text_input("Sök ticker", "")
+
 
 if "selected_ticker" not in st.session_state:
     st.session_state.selected_ticker = ""
