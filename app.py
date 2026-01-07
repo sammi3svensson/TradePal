@@ -13,11 +13,6 @@ st.markdown(
         html, body, [class*="css"]  {
             font-family: 'Inter', sans-serif;
         }
-        /* Horisontella tidsknappar */
-        .time-btn {
-            display: inline-block;
-            margin: 0 5px 5px 0;
-        }
     </style>
     """,
     unsafe_allow_html=True
@@ -25,7 +20,7 @@ st.markdown(
 
 # --- TradePal logga istället för texttitel (mindre storlek) ---
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
-st.image(logo_url, width=250)
+st.image(logo_url, width=250)  # Minska loggans bredd till 250px
 
 # --- Gradientbakgrund ---
 st.markdown(
@@ -80,12 +75,15 @@ with st.expander("Stockholmsbörsen", expanded=False):
             ticker_input = symbol.replace(".ST", "")
     st.markdown("</div>", unsafe_allow_html=True)
 
-# Bestäm vilken ticker som ska användas
+# --- Bestäm ticker ---
 ticker = st.session_state.selected_ticker if st.session_state.selected_ticker else ticker_input.upper()
 if ticker and not ticker.endswith(".ST"):
     ticker += ".ST"
 
-# --- Horisontella tidsknappar med on_click ---
+# --- Grafinställningar ---
+chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"], horizontal=True)
+
+# --- Ny: Horisontella tidsknappar istället för selectbox ---
 timeframe_options = ["1d", "1w", "1m", "3m", "6m", "1y", "Max"]
 if "selected_timeframe" not in st.session_state:
     st.session_state.selected_timeframe = "1d"
@@ -94,17 +92,14 @@ def set_timeframe(tf):
     st.session_state.selected_timeframe = tf
 
 st.markdown("**Välj tidsperiod:**")
-cols = st.columns(len(timeframe_options))
-for i, tf in enumerate(timeframe_options):
-    btn_style = "background-color: #b39ddb; color: #1f1f2e; font-weight: 600;" if st.session_state.selected_timeframe == tf else ""
-    with cols[i]:
-        if st.button(tf, key=tf, on_click=set_timeframe, args=(tf,)):
-            st.session_state.selected_timeframe = tf
+container = st.container()
+container.markdown('<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">', unsafe_allow_html=True)
+for tf in timeframe_options:
+    if container.button(tf, key=tf, on_click=set_timeframe, args=(tf,)):
+        st.session_state.selected_timeframe = tf
+container.markdown('</div>', unsafe_allow_html=True)
 
 timeframe = st.session_state.selected_timeframe
-
-# --- Grafinställningar ---
-chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"], horizontal=True)
 
 interval_map = {"1d": "5m", "1w": "15m", "1m": "30m", "3m": "1h", "6m": "1d", "1y": "1d", "Max": "1d"}
 period_map = {"1d": "1d", "1w": "7d", "1m": "1mo", "3m": "3mo", "6m": "6mo", "1y": "1y", "Max": "max"}
@@ -145,7 +140,7 @@ try:
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
                 tick_labels = data['Date'].dt.strftime('%d-%m')
-            else:
+            else:  # 3m
                 tick_labels = data['Date'].dt.strftime('%H:%M')
 
             fig.update_xaxes(
@@ -157,10 +152,15 @@ try:
                 nticks=10
             )
 
-        fig.update_layout(height=700)
+        # --- Öka höjden på trendfönstret ---
+        fig.update_layout(
+            height=700
+        )
 
+        # --- Y-axel ---
         price_min = data['Low'].min()
         price_max = data['High'].max()
+
         pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
         pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
 
