@@ -3,60 +3,62 @@ import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
 
-# --- Sida och theme ---
-st.set_page_config(
-    page_title="TradePal",
-    layout="wide",
-    page_icon="🚀"
-)
+# --- Sida och färgtema ---
+st.set_page_config(page_title="TradePal", layout="wide")
 
-# --- Stil med CSS: gradientbakgrund, logga, scrollbar på expander ---
+# --- Lägg till stil: subtil lila gradient för hela sidan ---
 st.markdown(
     """
     <style>
-    /* Bakgrund: subtil lila/rymd-gradient */
+    /* Body gradient */
     .stApp {
-        background: linear-gradient(135deg, #2a1f4f 0%, #6b3fa0 100%);
-        background-attachment: fixed;
-        color: #ffffff;
-        font-family: 'Arial', sans-serif;
+        background: linear-gradient(135deg, #f8f8ff, #eae6f8);
+        color: #2c2c2c;
     }
 
-    /* Header logga */
-    .header-logo {
-        display: flex;
-        align-items: center;
-        justify-content: left;
-        padding-bottom: 20px;
+    /* Scrollbar */
+    div[role="listbox"]::-webkit-scrollbar {
+        width: 8px;
     }
-    .header-logo img {
-        height: 60px;
+    div[role="listbox"]::-webkit-scrollbar-thumb {
+        background-color: #9b7fd8;
+        border-radius: 4px;
     }
 
-    /* Expander scrollbar */
-    .stExpander > div {
-        max-height: 300px;
-        overflow-y: auto;
+    /* Buttons */
+    .stButton>button {
+        background-color: #a386d0;
+        color: white;
+        border-radius: 8px;
+        padding: 0.35em 0.8em;
+        border: none;
+        font-weight: bold;
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        background-color: #8c63c2;
+        color: white;
     }
 
-    /* Plot container padding */
-    .element-container {
-        padding: 10px;
+    /* Inputs */
+    .stTextInput>div>div>input {
+        border-radius: 8px;
+        border: 1px solid #cfc9e8;
+        padding: 0.5em;
+    }
+
+    /* Radio/Selectbox */
+    .stRadio>div>div>label, .stSelectbox>div>div>label {
+        font-weight: bold;
+        color: #5e4b8b;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
 
-# --- Header med logga ---
-st.markdown(
-    """
-    <div class="header-logo">
-        <img src="https://i.imgur.com/jK6nB7E.png" alt="TradePal Logo">
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# --- Visa logga istället för texttitel ---
+st.image("/mnt/data/A_logo_design_for_\"TradePal\"_is_displayed_on_a_dar.png", use_column_width=True)
 
 # --- Svenska Nasdaq aktier med företagsnamn ---
 nasdaq_stocks = {
@@ -89,10 +91,15 @@ if "selected_ticker" not in st.session_state:
 
 # --- Lista med bolag som knappar i expander (scrollbar) ---
 with st.expander("Stockholmsbörsen", expanded=False):
+    st.markdown(
+        """
+        <div style="max-height: 300px; overflow-y: auto; width: fit-content;">
+    """, unsafe_allow_html=True)
     for name, symbol in nasdaq_stocks.items():
         if st.button(f"{name} – {symbol.replace('.ST','')}"):
             st.session_state.selected_ticker = symbol
             ticker_input = symbol.replace(".ST", "")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # --- Bestäm ticker ---
 ticker = st.session_state.selected_ticker if st.session_state.selected_ticker else ticker_input.upper()
@@ -111,7 +118,6 @@ period = period_map[timeframe]
 
 try:
     data = yf.Ticker(ticker).history(period=period, interval=interval)
-
     if data.empty:
         st.error(f"Inget data hittades för {ticker} i vald tidsram.")
     else:
@@ -138,11 +144,11 @@ try:
                 mode='lines'
             )])
 
-        # --- FIX: 1w, 1m, 3m → snygga ticklabels utan mikrosekunder ---
+        # --- Fix ticklabels 1w, 1m, 3m ---
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
                 tick_labels = data['Date'].dt.strftime('%d-%m')
-            else:  # 3m
+            else:
                 tick_labels = data['Date'].dt.strftime('%H:%M')
 
             fig.update_xaxes(
@@ -154,13 +160,11 @@ try:
                 nticks=10
             )
 
-        # --- Öka höjden på trendfönstret ---
         fig.update_layout(height=700)
 
         # 🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽
         price_min = data['Low'].min()
         price_max = data['High'].max()
-
         pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
         pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
 
