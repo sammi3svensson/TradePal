@@ -29,13 +29,13 @@ st.markdown(
     /* Extra utmärkning för Stockholmsbörsen-expander text */
     .stExpanderHeader {
         color: #222222 !important;
-        text-shadow: 1px 1px 5px rgba(0,0,0,0.4);
+        text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
     }
 
     /* Extra utmärkning för Candlestick / Linje radio-knappar */
     .stRadio label {
         color: #222222 !important;
-        text-shadow: 1px 1px 4px rgba(0,0,0,0.4);
+        text-shadow: 2px 2px 5px rgba(0,0,0,0.6);
     }
     </style>
     """,
