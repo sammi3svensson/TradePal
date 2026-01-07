@@ -20,7 +20,7 @@ st.markdown(
 
 # --- TradePal logga istället för texttitel (mindre storlek) ---
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
-st.image(logo_url, width=250)
+st.image(logo_url, width=250)  # Minska loggans bredd till 250px
 
 # --- Gradientbakgrund ---
 st.markdown(
@@ -36,30 +36,15 @@ st.markdown(
 
 # --- Svenska Nasdaq aktier med företagsnamn ---
 nasdaq_stocks = {
-    "VOLVO AB": "VOLV-B.ST",
-    "Ericsson": "ERIC-B.ST",
-    "Sandvik": "SAND.ST",
-    "H&M": "HM-B.ST",
-    "AstraZeneca": "ATCO-A.ST",
-    "Telia": "TELIA.ST",
-    "SEB": "SEB-A.ST",
-    "Swedbank": "SWED-A.ST",
-    "SKF": "SKF-B.ST",
-    "Assa Abloy": "ASSA-B.ST",
-    "Alfa Laval": "ALFA.ST",
-    "Telge": "TELGE.ST",
-    "NCC": "NCC-B.ST",
-    "SSAB": "SSAB-A.ST",
-    "Investor": "KINV-B.ST",
-    "EQT": "EQT.ST",
-    "Husqvarna": "HUSQ-B.ST",
-    "Atlas Copco": "ATCO-B.ST",
-    "Essity": "ESSITY-B.ST"
+    "VOLVO AB": "VOLV-B.ST", "Ericsson": "ERIC-B.ST", "Sandvik": "SAND.ST", "H&M": "HM-B.ST",
+    "AstraZeneca": "ATCO-A.ST", "Telia": "TELIA.ST", "SEB": "SEB-A.ST", "Swedbank": "SWED-A.ST",
+    "SKF": "SKF-B.ST", "Assa Abloy": "ASSA-B.ST", "Alfa Laval": "ALFA.ST", "Telge": "TELGE.ST",
+    "NCC": "NCC-B.ST", "SSAB": "SSAB-A.ST", "Investor": "KINV-B.ST", "EQT": "EQT.ST",
+    "Husqvarna": "HUSQ-B.ST", "Atlas Copco": "ATCO-B.ST", "Essity": "ESSITY-B.ST"
 }
 
 # --- Sökfält ---
 ticker_input = st.text_input("Sök ticker", "")
-
 if "selected_ticker" not in st.session_state:
     st.session_state.selected_ticker = ""
 
@@ -83,7 +68,7 @@ if ticker and not ticker.endswith(".ST"):
 # --- Grafinställningar ---
 chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"], horizontal=True)
 
-# --- Tidperioder med interaktiva horisontella knappar ---
+# --- Tidperioder med transparenta, horisontella knappar och aktiv markering ---
 timeframes = ["1d", "1w", "1m", "3m", "6m", "1y", "Max"]
 if "timeframe" not in st.session_state:
     st.session_state.timeframe = "1d"
@@ -94,24 +79,23 @@ def set_timeframe(tf):
 cols = st.columns(len(timeframes))
 for i, tf in enumerate(timeframes):
     if st.session_state.timeframe == tf:
-        style = "border: 2px solid #6c63ff; background-color: rgba(0,0,0,0); color: #ffffff;"
+        btn_style = f"background-color: #6c63ff; color: white; border: 2px solid #6c63ff;"
     else:
-        style = "border: 2px solid #555555; background-color: rgba(0,0,0,0); color: #cccccc;"
-    cols[i].button(
-        tf,
-        key=tf,
-        help=f"Visa {tf} trend",
-        on_click=set_timeframe,
-        args=(tf,),
-        kwargs={},
-        use_container_width=True
-    )
+        btn_style = "background-color: transparent; color: white; border: 1px solid rgba(255,255,255,0.3);"
+    if cols[i].button(tf, key=tf, on_click=set_timeframe, args=(tf,), help=f"Visa {tf} trend"):
+        st.session_state.timeframe = tf
+    # Lägg till CSS inline
+    st.markdown(f"""
+        <style>
+        div.stButton button[key="{tf}"] {{
+            {btn_style}
+        }}
+        </style>
+    """, unsafe_allow_html=True)
 
 timeframe = st.session_state.timeframe
-
 interval_map = {"1d": "5m", "1w": "15m", "1m": "30m", "3m": "1h", "6m": "1d", "1y": "1d", "Max": "1d"}
 period_map = {"1d": "1d", "1w": "7d", "1m": "1mo", "3m": "3mo", "6m": "6mo", "1y": "1y", "Max": "max"}
-
 interval = interval_map[timeframe]
 period = period_map[timeframe]
 
@@ -123,62 +107,40 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
             st.error(f"Inget data hittades för {ticker} i vald tidsram.")
             return
         data.reset_index(inplace=True)
-        data['Date'] = pd.to_datetime(
-            data['Datetime'] if 'Datetime' in data.columns else data['Date']
-        )
+        data['Date'] = pd.to_datetime(data['Datetime'] if 'Datetime' in data.columns else data['Date'])
 
         if chart_type == "Candlestick":
             fig = go.Figure(data=[go.Candlestick(
-                x=data['Date'],
-                open=data['Open'],
-                high=data['High'],
-                low=data['Low'],
-                close=data['Close'],
-                increasing_line_color='green',
-                decreasing_line_color='red',
+                x=data['Date'], open=data['Open'], high=data['High'],
+                low=data['Low'], close=data['Close'],
+                increasing_line_color='green', decreasing_line_color='red',
                 whiskerwidth=0.2
             )])
         else:
-            fig = go.Figure(data=[go.Scatter(
-                x=data['Date'],
-                y=data['Close'],
-                mode='lines'
-            )])
+            fig = go.Figure(data=[go.Scatter(x=data['Date'], y=data['Close'], mode='lines')])
 
-        # --- Ticklabels för 1w, 1m, 3m ---
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
                 tick_labels = data['Date'].dt.strftime('%d-%m')
             else:
                 tick_labels = data['Date'].dt.strftime('%H:%M')
-
             fig.update_xaxes(
-                type="category",
-                categoryorder="category ascending",
-                tickvals=data['Date'],
-                ticktext=tick_labels,
-                tickmode="auto",
-                nticks=10
+                type="category", categoryorder="category ascending",
+                tickvals=data['Date'], ticktext=tick_labels,
+                tickmode="auto", nticks=10
             )
 
         fig.update_layout(height=700)
-
         price_min = data['Low'].min()
         price_max = data['High'].max()
         pad_down = max((price_max - price_min) * 0.15, price_max * 0.005)
-        pad_up   = max((price_max - price_min) * 0.20, price_max * 0.007)
+        pad_up = max((price_max - price_min) * 0.20, price_max * 0.007)
 
         fig.update_layout(
             title=f"{ticker} – {timeframe} trend",
-            xaxis_title="Datum",
-            yaxis_title="Pris",
-            yaxis=dict(
-                range=[price_min - pad_down, price_max + pad_up],
-                autorange=False,
-                rangemode="normal"
-            )
+            xaxis_title="Datum", yaxis_title="Pris",
+            yaxis=dict(range=[price_min - pad_down, price_max + pad_up], autorange=False, rangemode="normal")
         )
-
         st.plotly_chart(fig, use_container_width=True)
 
     except Exception as e:
