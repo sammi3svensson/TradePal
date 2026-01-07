@@ -22,16 +22,6 @@ st.markdown(
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
 st.image(logo_url, width=250)  # Minska loggans bredd till 250px
 
-# --- Testtext under loggan i Inter-font ---
-st.markdown(
-    """
-    <div style="font-family: 'Inter', sans-serif; font-size: 24px; color: #ffffff; margin-bottom: 20px;">
-        Nästa nivå för dina investeringar
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
 # --- Gradientbakgrund som tidigare ---
 st.markdown(
     """
