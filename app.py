@@ -9,38 +9,22 @@ st.set_page_config(page_title="TradePal", layout="wide")
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
 st.image(logo_url, width=250)  # Minska loggans bredd till 250px
 
-# --- Subtil gradientbakgrund + textskuggor ---
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background: linear-gradient(180deg, #e9e6f5 0%, #ffffff 50%, #e9e6f5 100%);
-        background-attachment: fixed;
-    }
+# --- CSS för svart text och lätt skuggning på radio-knappar och expander ---
+st.markdown("""
+<style>
+/* Candlestick / Linje radio buttons */
+[data-baseweb="radio"] label {
+    color: black !important;
+    text-shadow: 1px 1px 2px #ffffff99;
+}
 
-    /* Standardtext: färg + subtil skugga */
-    .css-1d391kg, .css-1kyxreq, .css-1aumxhk, .stTextInput label, .stSelectbox label, .stRadio label, .stExpanderHeader {
-        color: #333333;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-        font-family: "Arial", sans-serif;
-        font-weight: 600;
-    }
-
-    /* Stockholmsbörsen-expander: svart text + skugga */
-    .stExpanderHeader {
-        color: #000000 !important;
-        text-shadow: 2px 2px 6px rgba(0,0,0,0.6);
-    }
-
-    /* Candlestick / Linje radio-knappar: svart text + skugga */
-    .stRadio label {
-        color: #000000 !important;
-        text-shadow: 2px 2px 5px rgba(0,0,0,0.6);
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+/* Stockholmsbörsen expander */
+.st-expanderHeader {
+    color: black !important;
+    text-shadow: 1px 1px 2px #ffffff99;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # --- Svenska Nasdaq aktier med företagsnamn ---
 nasdaq_stocks = {
@@ -68,6 +52,7 @@ nasdaq_stocks = {
 # --- Sökfält ---
 ticker_input = st.text_input("Sök ticker", "")
 
+# Om användaren inte skrivit in nåt men klickat på knapp lagras tickern här
 if "selected_ticker" not in st.session_state:
     st.session_state.selected_ticker = ""
 
@@ -130,8 +115,10 @@ try:
         # --- FIX: 1w, 1m, 3m → snygga ticklabels utan mikrosekunder ---
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
+                # Visa dag-månad för 1w och 1m
                 tick_labels = data['Date'].dt.strftime('%d-%m')
             else:  # 3m
+                # Visa timme:minut för 3m
                 tick_labels = data['Date'].dt.strftime('%H:%M')
 
             fig.update_xaxes(
