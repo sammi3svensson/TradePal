@@ -7,43 +7,15 @@ st.set_page_config(page_title="TradePal", layout="wide")
 
 # --- TradePal logga istället för texttitel (mindre storlek) ---
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
-st.image(logo_url, width=250)
+st.image(logo_url, width=250)  # Minska loggans bredd till 250px
 
-# --- Återgå till tidigare subtila gradientbakgrund ---
+# --- Subtil gradientbakgrund ---
 st.markdown(
     """
     <style>
     .stApp {
-        background: linear-gradient(135deg, #4b3f72 0%, #7b61a1 100%);
+        background: linear-gradient(180deg, #e9e6f5 0%, #ffffff 50%, #e9e6f5 100%);
         background-attachment: fixed;
-    }
-
-    /* Text utanför input/fält */
-    .custom-label {
-        color: white;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-        font-weight: 600;
-        font-family: 'Arial', sans-serif;
-    }
-
-    /* Inputfält, dropdowns och expander */
-    .stTextInput>div>div>input,
-    .stSelectbox>div>div>div>div,
-    .stButton>button,
-    .stExpander>button {
-        border-radius: 8px;
-        background-color: rgba(255,255,255,0.05) !important;
-        color: white !important;
-        border: none;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    }
-
-    .stSelectbox>div>div>div>div {
-        color: white !important;
-    }
-
-    .stButton>button:hover {
-        background-color: rgba(255,255,255,0.15) !important;
     }
     </style>
     """,
@@ -74,16 +46,13 @@ nasdaq_stocks = {
 }
 
 # --- Sökfält ---
-st.markdown('<div class="custom-label">Sök ticker</div>', unsafe_allow_html=True)
-ticker_input = st.text_input("", "")
+ticker_input = st.text_input("Sök ticker", "")
 
-# Om användaren inte skrivit in nåt men klickat på knapp lagras tickern här
 if "selected_ticker" not in st.session_state:
     st.session_state.selected_ticker = ""
 
 # --- Lista med bolag som knappar i expander (scrollbar) ---
-st.markdown('<div class="custom-label">Stockholmsbörsen</div>', unsafe_allow_html=True)
-with st.expander("", expanded=False):
+with st.expander("Stockholmsbörsen", expanded=False):
     st.markdown(
         """
         <div style="max-height: 300px; overflow-y: auto; width: fit-content;">
@@ -100,11 +69,8 @@ if ticker and not ticker.endswith(".ST"):
     ticker += ".ST"
 
 # --- Grafinställningar ---
-st.markdown('<div class="custom-label">Välj graftyp</div>', unsafe_allow_html=True)
-chart_type = st.radio("", ["Candlestick", "Linje"])
-
-st.markdown('<div class="custom-label">Välj tidsperiod</div>', unsafe_allow_html=True)
-timeframe = st.selectbox("", ["1d", "1w", "1m", "3m", "6m", "1y", "Max"])
+chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"])
+timeframe = st.selectbox("Välj tidsperiod", ["1d", "1w", "1m", "3m", "6m", "1y", "Max"])
 
 interval_map = {"1d": "5m", "1w": "15m", "1m": "30m", "3m": "1h", "6m": "1d", "1y": "1d", "Max": "1d"}
 period_map = {"1d": "1d", "1w": "7d", "1m": "1mo", "3m": "3mo", "6m": "6mo", "1y": "1y", "Max": "max"}
@@ -158,7 +124,9 @@ try:
             )
 
         # --- Öka höjden på trendfönstret ---
-        fig.update_layout(height=700)
+        fig.update_layout(
+            height=700
+        )
 
         # 🔽🔽🔽 Y-AXELN – MÅSTE LIGGA HÄR 🔽🔽🔽
         price_min = data['Low'].min()
