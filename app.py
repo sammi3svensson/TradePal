@@ -324,6 +324,38 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
                 mode='lines'
             )])
 
+        # --- Rita K / S-symboler ---
+buy_signals = [s for s in signals if s["type"] == "KÖP"]
+sell_signals = [s for s in signals if s["type"] == "SÄLJ"]
+
+if buy_signals:
+    fig.add_trace(go.Scatter(
+        x=[s["date"] for s in buy_signals],
+        y=[s["price"] for s in buy_signals],
+        mode="markers",
+        marker=dict(symbol="triangle-up", size=12, color="lime"),
+        name="Köp",
+        hovertext=[
+            f"KÖP<br>Datum: {s['date'].date()}<br>Pris: {s['price']:.2f}<br>Poäng: {s['score']}/100"
+            for s in buy_signals
+        ],
+        hoverinfo="text"
+    ))
+
+if sell_signals:
+    fig.add_trace(go.Scatter(
+        x=[s["date"] for s in sell_signals],
+        y=[s["price"] for s in sell_signals],
+        mode="markers",
+        marker=dict(symbol="triangle-down", size=12, color="red"),
+        name="Sälj",
+        hovertext=[
+            f"SÄLJ<br>Datum: {s['date'].date()}<br>Pris: {s['price']:.2f}<br>Poäng: {s['score']}/100"
+            for s in sell_signals
+        ],
+        hoverinfo="text"
+    ))
+
         # --- Ticklabels för 1w, 1m, 3m ---
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
