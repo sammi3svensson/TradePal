@@ -325,8 +325,8 @@ def plot_stock(ticker, timeframe, interval, period, chart_type):
             )])
 
         # --- Rita K / S-symboler ---
-             buy_signals = [s for s in signals if s["type"] == "KÖP"]
-             sell_signals = [s for s in signals if s["type"] == "SÄLJ"]
+        buy_signals = [s for s in signals if s["type"] == "KÖP"]
+        sell_signals = [s for s in signals if s["type"] == "SÄLJ"]
 
 if buy_signals:
     fig.add_trace(go.Scatter(
