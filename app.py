@@ -5,19 +5,14 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="TradePal", layout="wide")
 
-# --- Monstrose-stil font för hela sidan ---
+# --- Importera Inter-font ---
 st.markdown(
     """
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
-    html, body, [class*="css"]  {
-        font-family: 'Inter', sans-serif;
-    }
-
-    h1, h2, h3, h4, h5, h6 {
-        font-family: 'Inter', sans-serif;
-    }
+        html, body, [class*="css"]  {
+            font-family: 'Inter', sans-serif;
+        }
     </style>
     """,
     unsafe_allow_html=True
@@ -26,6 +21,28 @@ st.markdown(
 # --- TradePal logga istället för texttitel (mindre storlek) ---
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
 st.image(logo_url, width=250)  # Minska loggans bredd till 250px
+
+# --- Testtext under loggan i Inter-font ---
+st.markdown(
+    """
+    <div style="font-family: 'Inter', sans-serif; font-size: 24px; color: #ffffff; margin-bottom: 20px;">
+        Nästa nivå för dina investeringar
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# --- Gradientbakgrund som tidigare ---
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background: linear-gradient(135deg, #1f1f2e 0%, #3a3a5a 100%);
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # --- Svenska Nasdaq aktier med företagsnamn ---
 nasdaq_stocks = {
@@ -53,7 +70,6 @@ nasdaq_stocks = {
 # --- Sökfält ---
 ticker_input = st.text_input("Sök ticker", "")
 
-# Om användaren inte skrivit in nåt men klickat på knapp lagras tickern här
 if "selected_ticker" not in st.session_state:
     st.session_state.selected_ticker = ""
 
@@ -61,7 +77,7 @@ if "selected_ticker" not in st.session_state:
 with st.expander("Stockholmsbörsen", expanded=False):
     st.markdown(
         """
-        <div style="max-height: 300px; overflow-y: auto; width: fit-content;">
+        <div style="max-height: 300px; overflow-y: auto; width: fit-content; color: #000000; font-weight: 600;">
     """, unsafe_allow_html=True)
     for name, symbol in nasdaq_stocks.items():
         if st.button(f"{name} – {symbol.replace('.ST','')}"):
@@ -75,7 +91,7 @@ if ticker and not ticker.endswith(".ST"):
     ticker += ".ST"
 
 # --- Grafinställningar ---
-chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"])
+chart_type = st.radio("Välj graftyp", ["Candlestick", "Linje"], horizontal=True)
 timeframe = st.selectbox("Välj tidsperiod", ["1d", "1w", "1m", "3m", "6m", "1y", "Max"])
 
 interval_map = {"1d": "5m", "1w": "15m", "1m": "30m", "3m": "1h", "6m": "1d", "1y": "1d", "Max": "1d"}
