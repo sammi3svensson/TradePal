@@ -5,6 +5,19 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="TradePal", layout="wide")
 
+# --- Subtil gradientbakgrund med logga ---
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background: linear-gradient(to bottom right, #f2f0f8, #d6c9f2);
+        background-attachment: fixed;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # --- TradePal logga istället för texttitel (mindre storlek) ---
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
 st.image(logo_url, width=250)  # Minska loggans bredd till 250px
@@ -98,10 +111,8 @@ try:
         # --- FIX: 1w, 1m, 3m → snygga ticklabels utan mikrosekunder ---
         if timeframe in ["1w", "1m", "3m"]:
             if timeframe in ["1w", "1m"]:
-                # Visa dag-månad för 1w och 1m
                 tick_labels = data['Date'].dt.strftime('%d-%m')
             else:  # 3m
-                # Visa timme:minut för 3m
                 tick_labels = data['Date'].dt.strftime('%H:%M')
 
             fig.update_xaxes(
