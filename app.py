@@ -76,7 +76,15 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-ticker_input = st.text_input("Sök ticker", "")
+# --- Sökfält med on_change ---
+def update_ticker():
+    st.session_state.selected_ticker = st.session_state.ticker_input_upper
+
+st.text_input(
+    "Sök ticker",
+    key="ticker_input_upper",
+    on_change=update_ticker
+)
 
 
 if "selected_ticker" not in st.session_state:
