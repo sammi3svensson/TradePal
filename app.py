@@ -5,13 +5,43 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="TradePal", layout="wide")
 
-# --- Importera Inter-font ---
+# --- Importera Inter-font och sätt all text till svart eller mörk kontrast ---
 st.markdown(
     """
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         html, body, [class*="css"]  {
             font-family: 'Inter', sans-serif;
+            color: #000000;  /* mörk text mot gradientbakgrund */
+        }
+
+        /* Gradientbakgrund */
+        .stApp {
+            background: linear-gradient(135deg, #1f1f2e 0%, #3a3a5a 100%);
+        }
+
+        /* Radio buttons och selectbox text */
+        .stRadio label, .stSelectbox label {
+            color: #000000;
+            font-weight: 600;
+        }
+
+        /* Expander rubrik */
+        .stExpanderHeader {
+            color: #000000;
+            font-weight: 600;
+        }
+
+        /* Inputfält text */
+        input, textarea {
+            color: #000000;
+            font-weight: 400;
+        }
+
+        /* Buttons text */
+        button, .stButton>button {
+            color: #000000;
+            font-weight: 600;
         }
     </style>
     """,
@@ -21,18 +51,6 @@ st.markdown(
 # --- TradePal logga istället för texttitel (mindre storlek) ---
 logo_url = "https://raw.githubusercontent.com/sammi3svensson/TradePal/49f11e0eb22ef30a690cc74308b85c93c46318f0/tradepal_logo.png.png"
 st.image(logo_url, width=250)  # Minska loggans bredd till 250px
-
-# --- Gradientbakgrund som tidigare ---
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background: linear-gradient(135deg, #1f1f2e 0%, #3a3a5a 100%);
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
 # --- Svenska Nasdaq aktier med företagsnamn ---
 nasdaq_stocks = {
@@ -67,7 +85,7 @@ if "selected_ticker" not in st.session_state:
 with st.expander("Stockholmsbörsen", expanded=False):
     st.markdown(
         """
-        <div style="max-height: 300px; overflow-y: auto; width: fit-content; color: #000000; font-weight: 600;">
+        <div style="max-height: 300px; overflow-y: auto; width: fit-content;">
     """, unsafe_allow_html=True)
     for name, symbol in nasdaq_stocks.items():
         if st.button(f"{name} – {symbol.replace('.ST','')}"):
